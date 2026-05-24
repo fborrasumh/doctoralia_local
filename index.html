@@ -281,6 +281,36 @@ textarea{resize:vertical;min-height:68px}
 @keyframes fi{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}.fi{animation:fi .3s ease}
 @keyframes spin{to{transform:rotate(360deg)}}.spinning{animation:spin 1s linear infinite}
 
+/* ── SETUP PANEL ── */
+.cmd-block{display:flex;align-items:center;justify-content:space-between;background:#1e293b;border-radius:var(--r);padding:11px 14px;cursor:pointer;transition:background .15s;gap:12px;margin-bottom:4px}
+.cmd-block:hover{background:#0f172a}
+.cmd-block code{font-family:'Fira Mono','Cascadia Code',monospace;font-size:13px;color:#7dd3fc;word-break:break-all;flex:1}
+.cmd-copy{font-size:11px;color:#94a3b8;white-space:nowrap;flex-shrink:0;transition:color .15s}
+.cmd-block:hover .cmd-copy{color:#e2e8f0}
+.cmd-block.copied{background:#14532d}
+.cmd-block.copied .cmd-copy{color:#86efac}
+.hw-card{background:#f7f8fa;border:1px solid var(--border);border-radius:var(--r);padding:14px 16px}
+.hw-card-label{font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px}
+.hw-card-val{font-size:20px;font-weight:500;color:var(--text);font-family:var(--serif)}
+.hw-card-sub{font-size:11px;color:var(--t2);margin-top:2px}
+.model-card{background:#ffffff;border:2px solid var(--border);border-radius:var(--rl);padding:16px;transition:all .2s;position:relative}
+.model-card:hover{border-color:var(--bhi);box-shadow:var(--shadow-md)}
+.model-card.selected{border-color:var(--accent);background:#eff6ff}
+.model-card.recommended{border-color:var(--teal)}
+.model-grade{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:8px;font-size:14px;font-weight:700;flex-shrink:0}
+.grade-S{background:#dcfce7;color:#15803d}
+.grade-A{background:#dbeafe;color:#1d4ed8}
+.grade-B{background:#fef9c3;color:#a16207}
+.grade-C{background:#ffedd5;color:#c2410c}
+.grade-D{background:#fee2e2;color:#b91c1c}
+.os-card:hover{border-color:var(--accent)!important;background:#eff6ff}
+.os-card.active{border-color:var(--accent)!important;background:#eff6ff}
+.spinning{animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── IBOX ── */
+.ibox{display:flex;gap:8px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:var(--r);padding:10px 14px;font-size:12px;color:var(--t2);margin-bottom:16px;line-height:1.5}
+
 /* ── SCROLLBAR ── */
 ::-webkit-scrollbar{width:4px;height:4px}
 ::-webkit-scrollbar-track{background:#f3f4f6}
@@ -365,6 +395,8 @@ textarea{resize:vertical;min-height:68px}
       <div><h1>Doctoralia Local</h1><span>Ollama · Review Generator</span></div>
     </div>
   </div>
+  <div class="snav">Configuración</div>
+  <div class="ni-item" onclick="showMain('setup')" id="ni-setup"><span class="ni">🦙</span> Setup Ollama <span id="setupDot" style="margin-left:auto;width:7px;height:7px;border-radius:50%;background:var(--red);display:inline-block"></span></div>
   <div class="snav">Pipeline</div>
   <div class="ni-item active" onclick="showMain('wizard')"><span class="ni">✨</span> Nueva revisión</div>
   <div class="ni-item" onclick="showMain('output')"><span class="ni">📄</span> Artículo generado</div>
@@ -374,8 +406,7 @@ textarea{resize:vertical;min-height:68px}
   <div class="ni-item" onclick="showMain('agents')"><span class="ni">🤖</span> Agentes &amp; Tokens</div>
   <div class="ni-item" onclick="showMain('sources')"><span class="ni">📚</span> Fuentes &amp; Límites</div>
   <div class="snav">Recursos</div>
-  <div class="ni-item" onclick="window.open('https://ollama.com/library','_blank')"><span class="ni">📦</span> Modelos Ollama</div>
-  <div class="ni-item" onclick="window.open('https://canirun.ai','_blank')"><span class="ni">🖥️</span> ¿Qué modelos corro?</div>
+  <div class="ni-item" onclick="window.open('https://ollama.com/library','_blank')"><span class="ni">📦</span> Biblioteca Ollama</div>
   <div class="ni-item" onclick="openOnboard()"><span class="ni">❓</span> Tutorial</div>
   <div class="sidebar-footer">
     <div class="user-row">
@@ -403,6 +434,7 @@ textarea{resize:vertical;min-height:68px}
 
   <!-- TABS (navigation) -->
   <div class="tabs" id="mainTabs">
+    <div class="tab" id="tab-setup" onclick="showMain('setup')">🦙 Setup <span id="setupTabDot" class="tab-badge" style="background:var(--red)"></span></div>
     <div class="tab active" id="tab-wizard"   onclick="showMain('wizard')">✨ Nueva revisión</div>
     <div class="tab"        id="tab-output"   onclick="showMain('output')">📄 Artículo <span id="outputBadge" class="tab-badge" style="display:none"></span></div>
     <div class="tab"        id="tab-gaps"     onclick="showMain('gaps')">🔍 Gaps</div>
@@ -762,6 +794,195 @@ textarea{resize:vertical;min-height:68px}
     </div>
   </div>
 
+  <!-- ══════ PANEL: SETUP OLLAMA ══════ -->
+  <div class="tc content" id="tc-setup" style="max-width:860px">
+
+    <!-- ── PASO 1: DETECTOR DE HARDWARE ── -->
+    <div class="sh" style="margin-top:0">🖥️ Paso 1 — Detectar tu hardware</div>
+    <div id="hwDetectBox" style="background:#ffffff;border:1px solid var(--border);border-radius:var(--rl);padding:20px;margin-bottom:20px">
+
+      <!-- Estado auto-detect -->
+      <div id="hwAutoRow" style="display:flex;align-items:center;gap:14px;margin-bottom:16px">
+        <div id="hwSpinner" style="width:32px;height:32px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;display:none"></div>
+        <div id="hwStatusIcon" style="font-size:28px">🖥️</div>
+        <div style="flex:1">
+          <div style="font-size:14px;font-weight:500;color:var(--text)" id="hwStatusTitle">Listo para detectar tu hardware</div>
+          <div style="font-size:12px;color:var(--t2);margin-top:2px" id="hwStatusSub">Usamos WebGPU y las APIs del navegador — nada sale de tu ordenador</div>
+        </div>
+        <button class="btn btn-primary" id="btnDetectHW" onclick="detectHardware()">🔍 Detectar ahora</button>
+      </div>
+
+      <!-- Resultado hardware detectado -->
+      <div id="hwResult" style="display:none">
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px" id="hwCards"></div>
+        <div style="font-size:11px;color:var(--t3);padding:8px 0;border-top:1px solid var(--border)">⚠️ Estimaciones basadas en APIs del navegador. Los valores reales pueden variar ligeramente.</div>
+      </div>
+
+      <!-- Fallback manual -->
+      <div id="hwManualToggle" style="margin-top:8px">
+        <div style="font-size:12px;color:var(--accent);cursor:pointer;display:inline-flex;align-items:center;gap:5px" onclick="toggleManualHW()">
+          <span id="manualArrow">▶</span> Introducir specs manualmente
+        </div>
+        <div id="hwManualForm" style="display:none;margin-top:12px">
+          <div class="form-grid" style="max-width:500px">
+            <div class="field">
+              <label>RAM total del sistema (GB)</label>
+              <select id="manualRam">
+                <option value="4">4 GB</option><option value="8">8 GB</option>
+                <option value="16" selected>16 GB</option><option value="24">24 GB</option>
+                <option value="32">32 GB</option><option value="48">48 GB</option>
+                <option value="64">64 GB</option><option value="96">96 GB</option>
+                <option value="128">128 GB</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>VRAM GPU dedicada (GB)</label>
+              <select id="manualVram">
+                <option value="0" selected>Sin GPU dedicada</option>
+                <option value="4">4 GB (GTX 1650, etc.)</option>
+                <option value="6">6 GB (RTX 2060, etc.)</option>
+                <option value="8">8 GB (RTX 3070, etc.)</option>
+                <option value="10">10 GB (RTX 3080 10GB)</option>
+                <option value="12">12 GB (RTX 3080 12GB / 4070)</option>
+                <option value="16">16 GB (RTX 3090 Ti, etc.)</option>
+                <option value="24">24 GB (RTX 3090 / 4090)</option>
+                <option value="48">48 GB (A6000 / etc.)</option>
+                <option value="80">80 GB (A100)</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Tipo de sistema</label>
+              <select id="manualPlatform">
+                <option value="generic">PC / Linux (RAM + VRAM separadas)</option>
+                <option value="apple">Apple Silicon (memoria unificada)</option>
+                <option value="laptop">Portátil (RAM compartida con GPU)</option>
+              </select>
+            </div>
+            <div class="field" style="display:flex;align-items:flex-end">
+              <button class="btn btn-primary" style="width:100%" onclick="applyManualHW()">✅ Aplicar specs manuales</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── PASO 2: MODELOS COMPATIBLES ── -->
+    <div class="sh">🤖 Paso 2 — Modelos compatibles con tu hardware</div>
+    <div id="modelsBox" style="margin-bottom:20px">
+      <div id="modelsPlaceholder" style="background:#f7f8fa;border:1px solid var(--border);border-radius:var(--r);padding:28px;text-align:center;color:var(--t3);font-size:13px">
+        Detecta tu hardware primero para ver qué modelos puedes ejecutar
+      </div>
+      <div id="modelsList" style="display:none"></div>
+    </div>
+
+    <!-- ── PASO 3: INSTALAR OLLAMA ── -->
+    <div class="sh">⚙️ Paso 3 — Instalar Ollama</div>
+    <div style="background:#ffffff;border:1px solid var(--border);border-radius:var(--rl);padding:20px;margin-bottom:20px">
+      <div style="font-size:13px;color:var(--t2);margin-bottom:14px">Ollama es el servidor local que gestiona y ejecuta los modelos. Se instala en un minuto.</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px">
+        <div onclick="selectOS('mac')" id="osMac" class="os-card" style="border:2px solid var(--border);border-radius:var(--r);padding:14px;text-align:center;cursor:pointer;transition:all .15s">
+          <div style="font-size:28px;margin-bottom:6px"></div>
+          <div style="font-size:13px;font-weight:500">macOS</div>
+        </div>
+        <div onclick="selectOS('win')" id="osWin" class="os-card" style="border:2px solid var(--border);border-radius:var(--r);padding:14px;text-align:center;cursor:pointer;transition:all .15s">
+          <div style="font-size:28px;margin-bottom:6px">🪟</div>
+          <div style="font-size:13px;font-weight:500">Windows</div>
+        </div>
+        <div onclick="selectOS('linux')" id="osLinux" class="os-card" style="border:2px solid var(--border);border-radius:var(--r);padding:14px;text-align:center;cursor:pointer;transition:all .15s">
+          <div style="font-size:28px;margin-bottom:6px">🐧</div>
+          <div style="font-size:13px;font-weight:500">Linux</div>
+        </div>
+      </div>
+      <div id="installInstructions">
+        <div id="installMac" style="display:none">
+          <div class="sh" style="margin-top:0;margin-bottom:8px">Opción A — Descarga directa (recomendado)</div>
+          <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px">
+            <a href="https://ollama.com/download/Ollama-darwin.zip" target="_blank" class="btn btn-primary" style="text-decoration:none">⬇ Descargar Ollama para Mac</a>
+            <span style="font-size:12px;color:var(--t3)">Descomprime y mueve a Aplicaciones</span>
+          </div>
+          <div class="sh" style="margin-top:0;margin-bottom:8px">Opción B — Homebrew</div>
+          <div class="cmd-block" onclick="copyCmd(this)"><code>brew install ollama</code><span class="cmd-copy">📋 Copiar</span></div>
+        </div>
+        <div id="installWin" style="display:none">
+          <div class="sh" style="margin-top:0;margin-bottom:8px">Descarga el instalador</div>
+          <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px">
+            <a href="https://ollama.com/download/OllamaSetup.exe" target="_blank" class="btn btn-primary" style="text-decoration:none">⬇ Descargar Ollama para Windows</a>
+            <span style="font-size:12px;color:var(--t3)">Ejecuta el .exe y sigue el instalador</span>
+          </div>
+          <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:var(--r);padding:10px 14px;font-size:12px;color:var(--amber)">
+            ⚠️ Requiere Windows 10/11 (64-bit). Para NVIDIA necesitas drivers ≥ 452.39.
+          </div>
+        </div>
+        <div id="installLinux" style="display:none">
+          <div class="sh" style="margin-top:0;margin-bottom:8px">Un solo comando</div>
+          <div class="cmd-block" onclick="copyCmd(this)"><code>curl -fsSL https://ollama.com/install.sh | sh</code><span class="cmd-copy">📋 Copiar</span></div>
+          <div style="font-size:12px;color:var(--t3);margin-top:8px">Compatible con Ubuntu 20.04+, Debian, Fedora, Arch. Detecta automáticamente NVIDIA/AMD/CPU.</div>
+        </div>
+        <div id="installNone" style="font-size:13px;color:var(--t3);padding:8px 0">
+          👆 Selecciona tu sistema operativo arriba
+        </div>
+      </div>
+    </div>
+
+    <!-- ── PASO 4: DESCARGAR MODELO ── -->
+    <div class="sh">📦 Paso 4 — Descargar el modelo seleccionado</div>
+    <div style="background:#ffffff;border:1px solid var(--border);border-radius:var(--rl);padding:20px;margin-bottom:20px" id="pullBox">
+      <div id="pullPlaceholder" style="font-size:13px;color:var(--t3)">Selecciona un modelo en el Paso 2 para ver el comando de descarga.</div>
+      <div id="pullContent" style="display:none">
+        <div style="font-size:13px;color:var(--t2);margin-bottom:12px">
+          Abre una terminal y ejecuta este comando. La primera descarga puede tardar varios minutos según tu conexión.
+        </div>
+        <div style="margin-bottom:10px">
+          <div style="font-size:11px;color:var(--t3);margin-bottom:4px">1️⃣ Descarga el modelo</div>
+          <div class="cmd-block" id="pullCmd" onclick="copyCmd(this)"><code id="pullCmdText">ollama pull llama3.2</code><span class="cmd-copy">📋 Copiar</span></div>
+        </div>
+        <div style="margin-bottom:10px">
+          <div style="font-size:11px;color:var(--t3);margin-bottom:4px">2️⃣ (Opcional) Prueba rápida en terminal</div>
+          <div class="cmd-block" id="runCmd" onclick="copyCmd(this)"><code id="runCmdText">ollama run llama3.2 "Hola, responde en una frase"</code><span class="cmd-copy">📋 Copiar</span></div>
+        </div>
+        <div id="pullSizeNote" style="font-size:12px;color:var(--t3);padding:8px 12px;background:#f7f8fa;border-radius:var(--r)"></div>
+      </div>
+    </div>
+
+    <!-- ── PASO 5: VERIFICAR CONEXIÓN ── -->
+    <div class="sh">✅ Paso 5 — Verificar que todo funciona</div>
+    <div style="background:#ffffff;border:1px solid var(--border);border-radius:var(--rl);padding:20px;margin-bottom:20px">
+      <div style="font-size:13px;color:var(--t2);margin-bottom:14px">
+        Con Ollama corriendo en tu máquina, comprueba que Doctoralia Local puede conectarse.
+      </div>
+      <div style="display:flex;gap:10px;align-items:flex-end;margin-bottom:12px">
+        <div class="field" style="flex:1;margin-bottom:0">
+          <label>URL de Ollama</label>
+          <input type="text" id="ollamaHost" value="http://localhost:11434" placeholder="http://localhost:11434">
+        </div>
+        <button class="btn btn-primary" id="btnTestConn" onclick="testOllamaConnection()">🔌 Probar conexión</button>
+      </div>
+      <div id="connResult" style="display:none;border-radius:var(--r);padding:12px 16px;font-size:13px"></div>
+
+      <!-- Modelos instalados detectados -->
+      <div id="installedModelsBox" style="display:none;margin-top:14px">
+        <div class="sh" style="margin-top:0;margin-bottom:8px">Modelos instalados en Ollama</div>
+        <div id="installedModelsList" style="display:flex;flex-wrap:wrap;gap:8px"></div>
+        <div style="margin-top:12px;display:flex;gap:8px;align-items:flex-end">
+          <div class="field" style="flex:1;margin-bottom:0">
+            <label>Modelo activo para Doctoralia Local</label>
+            <select id="model" onchange="onModelChange()" style="font-size:13px"></select>
+          </div>
+          <button class="btn btn-success" onclick="saveAndGo()" style="white-space:nowrap">✅ Guardar y empezar →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Banner listo -->
+    <div id="setupReadyBanner" style="display:none;background:linear-gradient(135deg,#f0fdf4,#eff6ff);border:1px solid #bbf7d0;border-radius:var(--rl);padding:20px;text-align:center;margin-bottom:20px">
+      <div style="font-size:32px;margin-bottom:8px">🎉</div>
+      <div style="font-size:16px;font-weight:500;color:var(--text);margin-bottom:4px">¡Todo listo! Ollama conectado</div>
+      <div style="font-size:13px;color:var(--t2);margin-bottom:16px">Modelo activo: <strong id="readyModelName">—</strong></div>
+      <button class="btn btn-primary" style="padding:10px 28px;font-size:14px" onclick="saveAndGo()">▶ Ir a Nueva revisión</button>
+    </div>
+
+  </div><!-- /tc-setup -->
+
 </div><!-- /main -->
 </div><!-- /app -->
 
@@ -839,6 +1060,9 @@ document.addEventListener('DOMContentLoaded',()=>{
   buildHPSteps();
   const draft=localStorage.getItem('doctoralia_draft');
   if(draft){try{const d=JSON.parse(draft);if(d.text){showDraftBanner(d);}}catch(e){}}
+  // Auto-detect OS and select install tab
+  const detectedOS=detectOS()||localStorage.getItem('doctoralia_os');
+  if(detectedOS)selectOS(detectedOS);
   // Auto-test connection on load
   setTimeout(()=>testOllamaConnection(),800);
 });
@@ -855,6 +1079,7 @@ function openOnboard(){document.getElementById('onboardOverlay').style.display='
 //  MAIN NAV
 // ═══════════════════════════════════════════════════
 const PANEL_META={
+  setup:{title:'Setup Ollama',sub:'Detecta tu hardware, elige un modelo e instala Ollama paso a paso'},
   wizard:{title:'Nueva revisión',sub:'Configura tu tema y genera un artículo científico completo'},
   output:{title:'Artículo generado',sub:'Edita, descarga o copia tu revisión'},
   gaps:{title:'Gaps detectados',sub:'Brechas en la literatura identificadas automáticamente'},
@@ -1014,6 +1239,12 @@ async function testOllamaConnection(){
       avI.textContent='🟢';avL.textContent=getActiveModel()||models[0];
       document.getElementById('avSub').textContent=models.length+' modelos listos';
       log(`✅ Ollama conectado. Modelos: ${models.join(', ')}`,'ok');
+      // Update setup panel dots to green
+      const dot=document.getElementById('setupDot');const tabDot=document.getElementById('setupTabDot');
+      if(dot){dot.style.background='var(--teal)';}
+      if(tabDot){tabDot.style.background='var(--teal)';}
+      // Show installed models in setup panel
+      showInstalledModels(models);
     }else{
       badge.textContent='🟡 Conectado — sin modelos';
       badge.style.background='rgba(245,158,11,.12)';badge.style.color='var(--amber)';badge.style.borderColor='rgba(245,158,11,.3)';
@@ -1665,8 +1896,379 @@ function exportLatex(){
   log('⬇ LaTeX descargado. Compila con pdflatex o en overleaf.com.','ok');
 }
 
-function copyClipboard(){if(!generatedText)return;navigator.clipboard.writeText(generatedText).then(()=>{log('📋 Copiado al portapapeles.','ok');const btn=event.target;const o=btn.textContent;btn.textContent='✅ Copiado!';setTimeout(()=>btn.textContent=o,2000);});}
-function dl(filename,content,type){const blob=new Blob([content],{type});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=filename;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),5000);}
+// ═══════════════════════════════════════════════════
+//  SETUP PANEL — HARDWARE DETECTION & GUIDED INSTALL
+// ═══════════════════════════════════════════════════
+
+// Catálogo completo con metadatos para scoring
+const MODEL_CATALOG=[
+  {id:'llama3.2:1b',    name:'Llama 3.2 1B',   family:'Llama',    org:'Meta',    size_gb:0.8,  ram_min:4,  vram_opt:0,  ctx:128000, tok_s_cpu:25, tok_s_gpu:80,  tags:['⚡ Ultra rápido'],           desc:'El más ligero. Perfecto para explorar o hardware muy limitado.',       ollama:'llama3.2:1b'},
+  {id:'llama3.2',       name:'Llama 3.2 3B',   family:'Llama',    org:'Meta',    size_gb:2.0,  ram_min:4,  vram_opt:4,  ctx:128000, tok_s_cpu:15, tok_s_gpu:60,  tags:['🏎️ Rápido','💡 Recomendado'],desc:'Excelente equilibrio para hardware básico.',                            ollama:'llama3.2'},
+  {id:'llama3.1',       name:'Llama 3.1 8B',   family:'Llama',    org:'Meta',    size_gb:4.7,  ram_min:8,  vram_opt:8,  ctx:128000, tok_s_cpu:8,  tok_s_gpu:40,  tags:['⭐ Popular'],                 desc:'El modelo más popular de Meta. Buena calidad general.',                 ollama:'llama3.1'},
+  {id:'mistral',        name:'Mistral 7B',      family:'Mistral',  org:'Mistral', size_gb:4.1,  ram_min:8,  vram_opt:8,  ctx:32000,  tok_s_cpu:9,  tok_s_gpu:45,  tags:['📝 Escritura'],               desc:'Muy buena escritura académica y razonamiento.',                         ollama:'mistral'},
+  {id:'mistral-nemo',   name:'Mistral Nemo 12B',family:'Mistral',  org:'Mistral', size_gb:7.1,  ram_min:12, vram_opt:12, ctx:128000, tok_s_cpu:5,  tok_s_gpu:28,  tags:['📝 Textos largos'],            desc:'Ideal para revisiones largas. Contexto extendido.',                     ollama:'mistral-nemo'},
+  {id:'qwen2.5',        name:'Qwen 2.5 7B',    family:'Qwen',     org:'Alibaba', size_gb:4.7,  ram_min:8,  vram_opt:8,  ctx:128000, tok_s_cpu:8,  tok_s_gpu:42,  tags:['🌏 Multilingüe'],             desc:'Excelente en español y otros idiomas. Muy recomendado.',                ollama:'qwen2.5'},
+  {id:'qwen2.5:14b',    name:'Qwen 2.5 14B',   family:'Qwen',     org:'Alibaba', size_gb:9.0,  ram_min:16, vram_opt:12, ctx:128000, tok_s_cpu:4,  tok_s_gpu:22,  tags:['🌏 Multilingüe','⭐ Popular'], desc:'Calidad alta en español. Recomendado para revisiones académicas.',      ollama:'qwen2.5:14b'},
+  {id:'qwen2.5:32b',    name:'Qwen 2.5 32B',   family:'Qwen',     org:'Alibaba', size_gb:20,   ram_min:32, vram_opt:24, ctx:128000, tok_s_cpu:2,  tok_s_gpu:12,  tags:['🏆 Alta calidad'],             desc:'Alta calidad. Necesita hardware potente.',                              ollama:'qwen2.5:32b'},
+  {id:'phi4',           name:'Phi-4 14B',       family:'Phi',      org:'Microsoft',size_gb:9.1, ram_min:16, vram_opt:12, ctx:16000,  tok_s_cpu:4,  tok_s_gpu:20,  tags:['🔬 Científico'],              desc:'Especializado en razonamiento y ciencia. De Microsoft.',                ollama:'phi4'},
+  {id:'phi3.5',         name:'Phi-3.5 Mini',    family:'Phi',      org:'Microsoft',size_gb:2.2, ram_min:4,  vram_opt:4,  ctx:128000, tok_s_cpu:12, tok_s_gpu:55,  tags:['🏎️ Rápido','🔬 Científico'],  desc:'Pequeño y sorprendentemente bueno para su tamaño.',                    ollama:'phi3.5'},
+  {id:'gemma2',         name:'Gemma 2 9B',      family:'Gemma',    org:'Google',  size_gb:5.5,  ram_min:10, vram_opt:8,  ctx:8000,   tok_s_cpu:6,  tok_s_gpu:30,  tags:['⭐ Popular'],                 desc:'De Google. Muy sólido en texto académico.',                             ollama:'gemma2'},
+  {id:'gemma2:27b',     name:'Gemma 2 27B',     family:'Gemma',    org:'Google',  size_gb:16,   ram_min:24, vram_opt:16, ctx:8000,   tok_s_cpu:2,  tok_s_gpu:10,  tags:['🏆 Alta calidad'],             desc:'Alta calidad. Requiere bastante RAM.',                                  ollama:'gemma2:27b'},
+  {id:'deepseek-r1',    name:'DeepSeek-R1 7B',  family:'DeepSeek', org:'DeepSeek',size_gb:4.7,  ram_min:8,  vram_opt:8,  ctx:32000,  tok_s_cpu:7,  tok_s_gpu:35,  tags:['🧠 Razonamiento'],             desc:'Piensa paso a paso. Excelente para análisis complejos.',                ollama:'deepseek-r1'},
+  {id:'deepseek-r1:14b',name:'DeepSeek-R1 14B', family:'DeepSeek', org:'DeepSeek',size_gb:9.0,  ram_min:16, vram_opt:12, ctx:32000,  tok_s_cpu:3,  tok_s_gpu:18,  tags:['🧠 Razonamiento','⭐ Popular'],desc:'Razonamiento profundo. Muy bueno para revisiones críticas.',            ollama:'deepseek-r1:14b'},
+  {id:'deepseek-r1:32b',name:'DeepSeek-R1 32B', family:'DeepSeek', org:'DeepSeek',size_gb:20,   ram_min:32, vram_opt:24, ctx:32000,  tok_s_cpu:1,  tok_s_gpu:8,   tags:['🧠 Razonamiento','🏆 Alta calidad'],desc:'Máxima calidad de razonamiento.',                              ollama:'deepseek-r1:32b'},
+];
+
+let hwDetected={ram:0,vram:0,platform:'generic',gpuName:'',isApple:false};
+let selectedModelId=null;
+
+// ── HARDWARE DETECTION ───────────────────────────
+async function detectHardware(){
+  const spinner=document.getElementById('hwSpinner');
+  const icon=document.getElementById('hwStatusIcon');
+  const title=document.getElementById('hwStatusTitle');
+  const sub=document.getElementById('hwStatusSub');
+  const btn=document.getElementById('btnDetectHW');
+
+  spinner.style.display='block';
+  spinner.classList.add('spinning');
+  icon.style.display='none';
+  title.textContent='Analizando tu hardware...';
+  sub.textContent='Consultando WebGPU, WebGL y Navigator APIs...';
+  btn.disabled=true;
+
+  let ram=0, vram=0, gpuName='', isApple=false, platform='generic';
+
+  // 1. RAM via deviceMemory (aproximado, en GB)
+  if(navigator.deviceMemory){
+    ram=navigator.deviceMemory;
+    // deviceMemory está limitado a 8 por privacidad — corregimos hacia arriba si hay señales
+    if(ram>=8) ram=Math.max(ram,16); // heurístico conservador
+  }
+
+  // 2. GPU via WebGL
+  try{
+    const canvas=document.createElement('canvas');
+    const gl=canvas.getContext('webgl')||canvas.getContext('experimental-webgl');
+    if(gl){
+      const ext=gl.getExtension('WEBGL_debug_renderer_info');
+      if(ext){
+        const renderer=gl.getParameter(ext.UNMASKED_RENDERER_WEBGL)||'';
+        const vendor=gl.getParameter(ext.UNMASKED_VENDOR_WEBGL)||'';
+        gpuName=renderer;
+
+        // Detectar Apple Silicon
+        if(/apple/i.test(vendor)||/apple m[1-9]/i.test(renderer)||/metal/i.test(renderer)){
+          isApple=true;platform='apple';
+          // En Apple Silicon RAM unificada — estimamos VRAM = 60% de RAM detectada
+          if(!ram)ram=8;
+          vram=Math.round(ram*0.6);
+        }
+        // Detectar VRAM por nombre de tarjeta NVIDIA
+        else if(/nvidia|geforce|rtx|gtx/i.test(renderer)){
+          platform='generic';
+          const vramMap={
+            'RTX 4090':24,'RTX 4080':16,'RTX 4070 Ti':12,'RTX 4070':12,
+            'RTX 4060 Ti':16,'RTX 4060':8,'RTX 3090':24,'RTX 3080 Ti':12,
+            'RTX 3080':10,'RTX 3070 Ti':8,'RTX 3070':8,'RTX 3060 Ti':8,
+            'RTX 3060':12,'RTX 2080 Ti':11,'RTX 2080':8,'RTX 2070':8,
+            'RTX 2060':6,'GTX 1080 Ti':11,'GTX 1080':8,'GTX 1070':8,
+            'GTX 1060':6,'GTX 1050 Ti':4,'GTX 1650':4,'GTX 1660':6,
+          };
+          for(const[key,v] of Object.entries(vramMap)){
+            if(renderer.toUpperCase().includes(key)){vram=v;break;}
+          }
+          if(!vram){
+            // Estimación por serie si no tenemos match exacto
+            if(/RTX 40/i.test(renderer))vram=12;
+            else if(/RTX 30/i.test(renderer))vram=8;
+            else if(/RTX 20/i.test(renderer))vram=8;
+            else if(/GTX 16/i.test(renderer))vram=6;
+            else if(/GTX 10/i.test(renderer))vram=6;
+            else vram=4;
+          }
+        }
+        // AMD
+        else if(/amd|radeon|rx [0-9]/i.test(renderer)){
+          platform='generic';
+          if(/RX 7900/i.test(renderer))vram=24;
+          else if(/RX 7800|RX 6900|RX 6800/i.test(renderer))vram=16;
+          else if(/RX 7700|RX 6700/i.test(renderer))vram=12;
+          else if(/RX 7600|RX 6600/i.test(renderer))vram=8;
+          else if(/RX 6500|RX 580|RX 570/i.test(renderer))vram=8;
+          else vram=6;
+        }
+        // Intel Arc / integrada
+        else if(/intel/i.test(renderer)||/intel/i.test(vendor)){
+          platform='laptop';
+          if(/arc a7/i.test(renderer))vram=16;
+          else if(/arc a5/i.test(renderer))vram=8;
+          else{
+            platform='laptop';
+            vram=0; // integrada usa RAM del sistema
+          }
+        }
+      }
+    }
+  }catch(e){}
+
+  // 3. WebGPU (más preciso si disponible)
+  try{
+    if(navigator.gpu){
+      const adapter=await navigator.gpu.requestAdapter();
+      if(adapter){
+        const info=await adapter.requestAdapterInfo();
+        if(info.description) gpuName=gpuName||info.description;
+      }
+    }
+  }catch(e){}
+
+  // 4. RAM mejorada via hardwareConcurrency como proxy de tier
+  if(!ram){
+    const cores=navigator.hardwareConcurrency||4;
+    if(cores>=16)ram=32;
+    else if(cores>=12)ram=16;
+    else if(cores>=8)ram=16;
+    else if(cores>=4)ram=8;
+    else ram=4;
+  }
+
+  hwDetected={ram,vram,gpuName,isApple,platform};
+
+  spinner.style.display='none';
+  spinner.classList.remove('spinning');
+  icon.style.display='block';
+
+  if(ram>0||gpuName){
+    icon.textContent='✅';
+    title.textContent='Hardware detectado';
+    sub.textContent=gpuName||'GPU no identificada con precisión — revisa los valores abajo';
+    showHWResult(ram,vram,gpuName,isApple,platform);
+  }else{
+    icon.textContent='⚠️';
+    title.textContent='Detección parcial — introduce tus specs manualmente';
+    sub.textContent='Algunos navegadores limitan el acceso al hardware';
+    document.getElementById('hwManualForm').style.display='block';
+    document.getElementById('manualArrow').textContent='▼';
+  }
+  btn.disabled=false;
+  btn.textContent='🔄 Volver a detectar';
+  renderCompatibleModels(ram,vram,isApple);
+}
+
+function showHWResult(ram,vram,gpuName,isApple,platform){
+  const box=document.getElementById('hwResult');
+  const cards=document.getElementById('hwCards');
+  const effectiveMem=isApple?ram:(vram||ram);
+  const tier=effectiveMem>=24?'Alto':effectiveMem>=12?'Medio':effectiveMem>=8?'Normal':'Básico';
+  const tierColor=effectiveMem>=24?'var(--teal)':effectiveMem>=12?'var(--accent)':effectiveMem>=8?'var(--amber)':'var(--red)';
+
+  cards.innerHTML=`
+    <div class="hw-card">
+      <div class="hw-card-label">RAM Sistema</div>
+      <div class="hw-card-val">${ram||'?'} GB</div>
+      <div class="hw-card-sub">${isApple?'Memoria unificada (CPU+GPU)':'RAM del sistema'}</div>
+    </div>
+    <div class="hw-card">
+      <div class="hw-card-label">${isApple?'GPU Unificada':'VRAM GPU'}</div>
+      <div class="hw-card-val">${vram?vram+' GB':'CPU only'}</div>
+      <div class="hw-card-sub">${gpuName?gpuName.slice(0,40):isApple?'Apple Silicon':'Sin GPU dedicada'}</div>
+    </div>
+    <div class="hw-card" style="border-color:${tierColor};background:${effectiveMem>=12?'#f0fdf4':'#fffbeb'}">
+      <div class="hw-card-label">Potencia IA</div>
+      <div class="hw-card-val" style="color:${tierColor}">${tier}</div>
+      <div class="hw-card-sub">~${vram||Math.round(ram*0.5)} GB disponibles para el modelo</div>
+    </div>`;
+  box.style.display='block';
+}
+
+function toggleManualHW(){
+  const f=document.getElementById('hwManualForm');
+  const a=document.getElementById('manualArrow');
+  const open=f.style.display==='none';
+  f.style.display=open?'block':'none';
+  a.textContent=open?'▼':'▶';
+}
+
+function applyManualHW(){
+  const ram=parseInt(document.getElementById('manualRam').value)||16;
+  const vram=parseInt(document.getElementById('manualVram').value)||0;
+  const platform=document.getElementById('manualPlatform').value;
+  const isApple=platform==='apple';
+  hwDetected={ram,vram,gpuName:'Manual',isApple,platform};
+  document.getElementById('hwStatusIcon').textContent='✅';
+  document.getElementById('hwStatusTitle').textContent='Specs aplicadas manualmente';
+  document.getElementById('hwStatusSub').textContent=`RAM: ${ram}GB · VRAM: ${vram}GB · ${platform}`;
+  showHWResult(ram,vram,'Configuración manual',isApple,platform);
+  renderCompatibleModels(ram,vram,isApple);
+}
+
+// ── MODEL COMPATIBILITY SCORING ──────────────────
+function scoreModel(m,ram,vram,isApple){
+  const effectiveMem=isApple?ram:Math.max(vram,ram*0.5);
+  const memForModel=isApple?ram*0.75:(vram>0?vram:ram*0.6);
+  const fits=memForModel>=m.size_gb*1.1;
+  const comfort=memForModel/(m.size_gb*1.2);
+
+  if(!fits||ram<m.ram_min)return{grade:'F',label:'No ejecutable',color:'#dc2626',bg:'#fee2e2',score:0};
+  if(comfort>=2.0) return{grade:'S',label:'Corre genial',  color:'#15803d',bg:'#dcfce7',score:100};
+  if(comfort>=1.4) return{grade:'A',label:'Corre bien',    color:'#1d4ed8',bg:'#dbeafe',score:80};
+  if(comfort>=1.1) return{grade:'B',label:'Corre OK',      color:'#a16207',bg:'#fef9c3',score:60};
+  if(comfort>=0.9) return{grade:'C',label:'Ajustado',      color:'#c2410c',bg:'#ffedd5',score:40};
+  return             {grade:'D',label:'Muy justo',          color:'#b91c1c',bg:'#fee2e2',score:20};
+}
+
+function renderCompatibleModels(ram,vram,isApple){
+  const box=document.getElementById('modelsList');
+  const placeholder=document.getElementById('modelsPlaceholder');
+
+  const scored=MODEL_CATALOG
+    .map(m=>({...m,scoring:scoreModel(m,ram,vram,isApple)}))
+    .filter(m=>m.scoring.grade!=='F')
+    .sort((a,b)=>b.scoring.score-a.scoring.score);
+
+  if(!scored.length){
+    placeholder.style.display='block';
+    placeholder.innerHTML='<div style="font-size:32px;margin-bottom:8px">😔</div><div style="font-size:13px;color:var(--red);font-weight:500">Con esta configuración no es posible ejecutar modelos LLM locales de forma razonable.</div><div style="font-size:12px;color:var(--t3);margin-top:6px">Se necesita al menos 4 GB de RAM para el modelo más básico.</div>';
+    box.style.display='none';
+    return;
+  }
+
+  placeholder.style.display='none';
+  box.style.display='block';
+
+  // Marca el recomendado (mejor scoring + grade A o S + multilingüe si idioma es español)
+  const recommended=scored.find(m=>m.scoring.grade==='S'&&m.tags.some(t=>t.includes('Multilingüe')))||scored[0];
+
+  const tok_s=vram>0?'tok_s_gpu':'tok_s_cpu';
+
+  box.innerHTML=`
+  <div style="font-size:12px;color:var(--t3);margin-bottom:10px">
+    ${scored.length} modelos compatibles · Haz click en un modelo para seleccionarlo y ver los comandos de instalación
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px">
+  ${scored.map(m=>{
+    const isRec=m.id===recommended.id;
+    const toks=m[tok_s];
+    const tags=m.tags.map(t=>`<span style="font-size:9px;padding:2px 6px;border-radius:8px;background:#dbeafe;color:var(--accent);font-weight:500">${t}</span>`).join(' ');
+    return `<div class="model-card${isRec?' recommended':''}" id="mcard-${m.id.replace(':','-')}"
+      onclick="selectModelCard('${m.id}')"
+      style="${isRec?'border-color:var(--teal);':''}">
+      ${isRec?'<div style="position:absolute;top:-1px;right:12px;background:var(--teal);color:#fff;font-size:10px;padding:2px 8px;border-radius:0 0 6px 6px;font-weight:500">⭐ Recomendado</div>':''}
+      <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:8px">
+        <div class="model-grade grade-${m.scoring.grade}" style="background:${m.scoring.bg};color:${m.scoring.color}">${m.scoring.grade}</div>
+        <div style="flex:1">
+          <div style="font-size:13px;font-weight:500;color:var(--text)">${m.name}</div>
+          <div style="font-size:11px;color:var(--t3)">${m.org} · ${m.size_gb}GB · ctx ${(m.ctx/1000).toFixed(0)}K</div>
+        </div>
+      </div>
+      <div style="font-size:12px;color:var(--t2);margin-bottom:8px;line-height:1.5">${m.desc}</div>
+      <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:8px">${tags}</div>
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div style="font-size:11px;color:var(--t3)">~${toks} tok/s · ${m.scoring.label}</div>
+        <button class="btn btn-primary" style="font-size:11px;padding:4px 10px" onclick="event.stopPropagation();selectModelCard('${m.id}')">Usar este</button>
+      </div>
+    </div>`;
+  }).join('')}
+  </div>`;
+}
+
+function selectModelCard(modelId){
+  // Deselect all
+  document.querySelectorAll('.model-card').forEach(c=>c.classList.remove('selected'));
+  const safeId=modelId.replace(':','-');
+  const card=document.getElementById('mcard-'+safeId);
+  if(card)card.classList.add('selected');
+
+  selectedModelId=modelId;
+  const m=MODEL_CATALOG.find(x=>x.id===modelId);
+  if(!m)return;
+
+  // Update pull box
+  document.getElementById('pullPlaceholder').style.display='none';
+  document.getElementById('pullContent').style.display='block';
+  document.getElementById('pullCmdText').textContent=`ollama pull ${m.ollama}`;
+  document.getElementById('runCmdText').textContent=`ollama run ${m.ollama} "Hola, responde en una frase"`;
+  document.getElementById('pullSizeNote').innerHTML=`📦 Tamaño de descarga: ~${m.size_gb} GB · Contexto: ${(m.ctx/1000).toFixed(0)}K tokens · Necesitas ${m.ram_min}GB RAM mínimo`;
+
+  // Save to modelManual for use in generation
+  document.getElementById('modelManual').value=m.ollama;
+  onModelChange();
+  log(`🦙 Modelo seleccionado: ${m.name} (${m.ollama})`,'ok');
+}
+
+// ── OS SELECTION ─────────────────────────────────
+function selectOS(os){
+  ['mac','win','linux'].forEach(o=>{
+    document.getElementById('os'+o.charAt(0).toUpperCase()+o.slice(1)).classList.remove('active');
+    document.getElementById('install'+o.charAt(0).toUpperCase()+o.slice(1)).style.display='none';
+  });
+  document.getElementById('installNone').style.display='none';
+  document.getElementById('os'+os.charAt(0).toUpperCase()+os.slice(1)).classList.add('active');
+  document.getElementById('install'+os.charAt(0).toUpperCase()+os.slice(1)).style.display='block';
+  localStorage.setItem('doctoralia_os',os);
+}
+
+// Auto-detect OS
+function detectOS(){
+  const ua=navigator.userAgent;
+  if(/Mac/i.test(ua))return 'mac';
+  if(/Win/i.test(ua))return 'win';
+  if(/Linux/i.test(ua))return 'linux';
+  return null;
+}
+
+// ── COPY COMMAND ─────────────────────────────────
+function copyCmd(block){
+  const code=block.querySelector('code');
+  if(!code)return;
+  navigator.clipboard.writeText(code.textContent).then(()=>{
+    const copy=block.querySelector('.cmd-copy');
+    const origClass=block.className;
+    block.classList.add('copied');
+    if(copy){const o=copy.textContent;copy.textContent='✅ Copiado!';setTimeout(()=>{copy.textContent=o;block.className=origClass;},2000);}
+  });
+}
+
+// ── SAVE AND GO ──────────────────────────────────
+function saveAndGo(){
+  const model=getActiveModel();
+  if(!model){alert('Selecciona un modelo primero.');return;}
+  log(`✅ Modelo guardado: ${model}`,'ok');
+  showMain('wizard');
+}
+
+// ── SHOW INSTALLED MODELS IN SETUP STEP 5 ────────
+function showInstalledModels(models){
+  const box=document.getElementById('installedModelsBox');
+  const list=document.getElementById('installedModelsList');
+  const sel=document.getElementById('model');
+  const saved=localStorage.getItem('doctoralia_ollama_model')||'';
+  if(!box||!list||!sel)return;
+
+  list.innerHTML=models.map(m=>`
+    <div style="display:inline-flex;align-items:center;gap:6px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:20px;padding:4px 12px;font-size:12px;color:var(--teal);cursor:pointer"
+      onclick="document.getElementById('model').value='${m}';onModelChange()"
+      title="Usar ${m}">
+      🦙 ${m}
+    </div>`).join('');
+
+  sel.innerHTML=models.map(m=>`<option value="${m}" ${m===saved?'selected':''}>${m}</option>`).join('');
+  box.style.display='block';
+
+  // Show ready banner if a model is selected
+  const active=saved&&models.includes(saved)?saved:models[0];
+  if(active){
+    sel.value=active;
+    onModelChange();
+    document.getElementById('setupReadyBanner').style.display='block';
+    document.getElementById('readyModelName').textContent=active;
+  }
+}
+
+// ── UPDATE SETUP PANEL META ──────────────────────
+const PANEL_META_ORIG=Object.assign({},typeof PANEL_META!=='undefined'?PANEL_META:{});
+
 </script>
 </body>
 </html>
