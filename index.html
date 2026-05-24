@@ -1220,45 +1220,165 @@ async function testOllamaConnection(){
   const host=document.getElementById('ollamaHost').value.trim()||'http://localhost:11434';
   const btn=document.getElementById('btnTestConn');
   const badge=document.getElementById('ollamaStatusBadge');
+  const connResult=document.getElementById('connResult');
   btn.textContent='⏳ Probando...';btn.disabled=true;
+  if(connResult)connResult.style.display='none';
+
+  // ── Detección anticipada de Mixed Content ──────────────────────────────
+  // Si la página está en HTTPS y el host es http://, el navegador bloqueará
+  // la request ANTES de que llegue a Ollama — no es un fallo de Ollama.
+  const pageIsHttps=location.protocol==='https:';
+  const hostIsHttp=host.startsWith('http://');
+  if(pageIsHttps&&hostIsHttp){
+    setBadgeError(badge);
+    if(connResult)showConnError(connResult,'mixed-content',host);
+    btn.textContent='🔌 Probar conexión';btn.disabled=false;
+    return;
+  }
+
   try{
-    const r=await fetch(`${host}/api/tags`,{signal:AbortSignal.timeout(5000)});
+    const r=await fetch(`${host}/api/tags`,{signal:AbortSignal.timeout(6000)});
     if(!r.ok)throw new Error('HTTP '+r.status);
     const data=await r.json();
     const models=(data.models||[]).map(m=>m.name);
-    // populate selector
     const sel=document.getElementById('model');
     const saved=localStorage.getItem('doctoralia_ollama_model')||'';
     sel.innerHTML=models.length
       ? models.map(m=>`<option value="${m}" ${m===saved?'selected':''}>${m}</option>`).join('')
-      : '<option value="">No hay modelos — haz ollama pull &lt;modelo&gt;</option>';
+      : '<option value="">No hay modelos — ejecuta: ollama pull llama3.2</option>';
     if(models.length){
       badge.textContent='🟢 Conectado · '+models.length+' modelos';
-      badge.style.background='rgba(5,150,105,.12)';badge.style.color='var(--teal)';badge.style.borderColor='rgba(5,150,105,.3)';
-      const avI=document.getElementById('avI');const avL=document.getElementById('avL');
-      avI.textContent='🟢';avL.textContent=getActiveModel()||models[0];
+      badge.style.cssText='margin-left:auto;font-size:11px;background:rgba(5,150,105,.12);color:var(--teal);padding:3px 9px;border-radius:20px;border:1px solid rgba(5,150,105,.3)';
+      document.getElementById('avI').textContent='🟢';
+      document.getElementById('avL').textContent=getActiveModel()||models[0];
       document.getElementById('avSub').textContent=models.length+' modelos listos';
-      log(`✅ Ollama conectado. Modelos: ${models.join(', ')}`,'ok');
-      // Update setup panel dots to green
       const dot=document.getElementById('setupDot');const tabDot=document.getElementById('setupTabDot');
-      if(dot){dot.style.background='var(--teal)';}
-      if(tabDot){tabDot.style.background='var(--teal)';}
-      // Show installed models in setup panel
+      if(dot)dot.style.background='var(--teal)';
+      if(tabDot)tabDot.style.background='var(--teal)';
+      if(connResult)showConnSuccess(connResult,models);
       showInstalledModels(models);
+      log(`✅ Ollama conectado. Modelos: ${models.join(', ')}`,'ok');
     }else{
       badge.textContent='🟡 Conectado — sin modelos';
-      badge.style.background='rgba(245,158,11,.12)';badge.style.color='var(--amber)';badge.style.borderColor='rgba(245,158,11,.3)';
-      log('⚠️ Ollama responde pero no hay modelos. Ejecuta: ollama pull llama3.2','warn');
+      badge.style.cssText='margin-left:auto;font-size:11px;background:rgba(245,158,11,.12);color:var(--amber);padding:3px 9px;border-radius:20px;border:1px solid rgba(245,158,11,.3)';
+      if(connResult)showConnError(connResult,'no-models',host);
+      log('⚠️ Ollama responde pero no hay modelos instalados.','warn');
     }
     onModelChange();
     localStorage.setItem('doctoralia_ollama_host',host);
   }catch(e){
-    badge.textContent='🔴 Sin conexión';
-    badge.style.background='rgba(220,38,38,.12)';badge.style.color='var(--red)';badge.style.borderColor='rgba(220,38,38,.3)';
+    setBadgeError(badge);
     document.getElementById('avI').textContent='🔴';
-    log(`❌ No se puede conectar a Ollama en ${host}: ${e.message}`,'err');
-    log('💡 ¿Está Ollama corriendo? Prueba: ollama serve','warn');
+    // Diagnosticar tipo de error
+    const errMsg=e.message||'';
+    const isCors=errMsg.includes('CORS')||errMsg.includes('cors')||errMsg.includes('NetworkError')||errMsg.includes('Failed to fetch')||errMsg.includes('fetch');
+    if(connResult)showConnError(connResult, isCors?'cors':'down', host);
+    log(`❌ Error conectando a Ollama: ${errMsg}`,'err');
   }finally{btn.textContent='🔌 Probar conexión';btn.disabled=false;}
+}
+
+function setBadgeError(badge){
+  if(!badge)return;
+  badge.textContent='🔴 Sin conexión';
+  badge.style.cssText='margin-left:auto;font-size:11px;background:rgba(220,38,38,.12);color:var(--red);padding:3px 9px;border-radius:20px;border:1px solid rgba(220,38,38,.3)';
+}
+
+function showConnSuccess(el,models){
+  el.style.display='block';
+  el.style.cssText='display:block;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:var(--r);padding:14px 16px;font-size:13px';
+  el.innerHTML=`<div style="font-weight:500;color:var(--teal);margin-bottom:6px">✅ Ollama conectado correctamente</div>
+    <div style="color:var(--t2)">Modelos instalados: <strong>${models.join(', ')}</strong></div>
+    <div style="color:var(--t3);font-size:11px;margin-top:4px">Selecciona el modelo activo abajo y pulsa "Guardar y empezar →"</div>`;
+}
+
+function showConnError(el,type,host){
+  el.style.display='block';
+  el.style.cssText='display:block;border-radius:var(--r);padding:0;font-size:13px;overflow:hidden';
+  const origin=location.origin;
+  const isGithub=origin.includes('github.io');
+
+  const fixes={
+    'mixed-content':{
+      icon:'🔒',title:'Bloqueo Mixed Content (HTTPS → HTTP)',
+      color:'#7c3aed',bg:'#f5f3ff',border:'#ddd6fe',
+      body:`Tu página está en <strong>HTTPS</strong> pero Ollama usa <strong>HTTP</strong>. Los navegadores bloquean esto por seguridad — no es un fallo de Ollama ni de la app.
+      <br><br><strong>Solución: configura Ollama para aceptar tu origen</strong>`,
+      steps:[
+        {os:'macOS / Linux',cmds:[
+          `launchctl setenv OLLAMA_ORIGINS "${origin}"`,
+          `OLLAMA_ORIGINS="${origin}" ollama serve`
+        ]},
+        {os:'Windows (PowerShell)',cmds:[
+          `$env:OLLAMA_ORIGINS="${origin}"`,
+          `ollama serve`
+        ]},
+        {os:'Linux (systemd)',cmds:[
+          `sudo systemctl edit ollama`,
+          `# Añade estas líneas en el editor:\n[Service]\nEnvironment="OLLAMA_ORIGINS=${origin}"`,
+          `sudo systemctl restart ollama`
+        ]}
+      ],
+      note: isGithub?`⚠️ GitHub Pages (HTTPS) siempre necesitará este ajuste. Considera alojar la app en <strong>http://</strong> o usar un servidor local.`:null
+    },
+    'cors':{
+      icon:'🚫',title:'Error CORS — Ollama no permite este origen',
+      color:'#b45309',bg:'#fffbeb',border:'#fde68a',
+      body:`Ollama está corriendo pero rechaza las peticiones desde <strong>${origin}</strong>. Necesitas añadir tu origen a la variable <code>OLLAMA_ORIGINS</code>.`,
+      steps:[
+        {os:'macOS / Linux (terminal)',cmds:[
+          `OLLAMA_ORIGINS="${origin}" ollama serve`
+        ]},
+        {os:'macOS (LaunchAgent)',cmds:[
+          `launchctl setenv OLLAMA_ORIGINS "${origin}"`,
+          `# Reinicia Ollama desde la barra de menú`
+        ]},
+        {os:'Windows (PowerShell)',cmds:[
+          `$env:OLLAMA_ORIGINS="${origin}"`,
+          `ollama serve`
+        ]},
+        {os:'Linux (systemd)',cmds:[
+          `sudo systemctl edit ollama`,
+          `# Añade:\n[Service]\nEnvironment="OLLAMA_ORIGINS=${origin}"`,
+          `sudo systemctl restart ollama`
+        ]}
+      ],
+      note:null
+    },
+    'down':{
+      icon:'💤',title:'Ollama no está corriendo',
+      color:'#dc2626',bg:'#fef2f2',border:'#fecaca',
+      body:`No se detecta Ollama en <strong>${host}</strong>. Asegúrate de que está instalado y en ejecución.`,
+      steps:[
+        {os:'Iniciar Ollama',cmds:['ollama serve']}
+      ],
+      note:'Si acabas de instalar Ollama, puede que necesites abrir la aplicación primero (macOS/Windows) o ejecutar <code>ollama serve</code> en terminal.'
+    },
+    'no-models':{
+      icon:'📭',title:'Ollama conectado — pero sin modelos instalados',
+      color:'#d97706',bg:'#fffbeb',border:'#fde68a',
+      body:'Ollama está corriendo pero no tienes ningún modelo descargado. Elige uno en el Paso 2 y ejecuta el comando de descarga.',
+      steps:[
+        {os:'Descargar un modelo recomendado',cmds:['ollama pull llama3.2']}
+      ],
+      note:null
+    }
+  };
+
+  const f=fixes[type]||fixes['down'];
+  let stepsHtml=f.steps.map(s=>`
+    <div style="margin-bottom:10px">
+      <div style="font-size:11px;font-weight:500;color:#6b7280;margin-bottom:4px">${s.os}</div>
+      ${s.cmds.map(c=>`<div class="cmd-block" onclick="copyCmd(this)" style="margin-bottom:4px"><code>${c.replace(/\n/g,'<br>')}</code><span class="cmd-copy">📋 Copiar</span></div>`).join('')}
+    </div>`).join('');
+
+  el.innerHTML=`
+    <div style="background:${f.bg};border:1px solid ${f.border};border-radius:var(--r);padding:14px 16px">
+      <div style="font-weight:500;color:${f.color};margin-bottom:8px">${f.icon} ${f.title}</div>
+      <div style="color:var(--t2);margin-bottom:12px;line-height:1.6">${f.body}</div>
+      ${stepsHtml}
+      ${f.note?`<div style="font-size:11px;color:var(--t3);margin-top:8px;padding-top:8px;border-top:1px solid ${f.border};line-height:1.5">${f.note}</div>`:''}
+      <button class="btn btn-primary" style="margin-top:10px;font-size:12px" onclick="testOllamaConnection()">🔄 Reintentar conexión</button>
+    </div>`;
 }
 
 async function refreshModelList(){
