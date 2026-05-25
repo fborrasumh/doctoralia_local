@@ -330,57 +330,110 @@ textarea{resize:vertical;min-height:68px}
 <!-- ══════════════════════════════════════════════
      ONBOARDING OVERLAY (shown on first visit)
 ══════════════════════════════════════════════ -->
-<div class="onboard-overlay" id="onboardOverlay">
-  <div class="onboard-box">
-    <div id="ob1">
-      <div class="onboard-icon">🦙</div>
-      <h2>Bienvenido a Doctoralia Local</h2>
-      <p>Genera artículos de revisión científica usando modelos de IA que corren <strong>100% en tu ordenador</strong> via Ollama. Sin API keys, sin costes, sin enviar datos a la nube.</p>
-      <div class="onboard-steps">
-        <div class="ostep"><div class="ostep-icon">🖥️</div><div class="ostep-title">Detecta tu hardware</div><div class="ostep-desc">Usamos canirun.ai para saber qué modelos puede ejecutar tu máquina según RAM y VRAM</div></div>
-        <div class="ostep"><div class="ostep-icon">📦</div><div class="ostep-title">Descarga el modelo</div><div class="ostep-desc">Un comando <code>ollama pull</code> descarga el modelo. Tarda unos minutos la primera vez.</div></div>
-        <div class="ostep"><div class="ostep-icon">🔒</div><div class="ostep-title">100% local y privado</div><div class="ostep-desc">Todo corre en tu máquina. Tus datos, tu investigación, nunca salen de tu ordenador.</div></div>
-      </div>
-      <button class="btn btn-primary" style="width:100%;padding:12px;font-size:14px" onclick="nextOnboard(2)">Continuar →</button>
+<!-- ══════════════════════════════════════════════
+     SETUP WIZARD — pantalla inicial simplificada
+══════════════════════════════════════════════ -->
+<div id="setupWizard" style="position:fixed;inset:0;z-index:3000;background:#f8fafc;display:flex;align-items:center;justify-content:center;padding:20px;overflow-y:auto">
+  <div style="width:100%;max-width:520px;margin:auto">
+
+    <!-- Logo -->
+    <div style="text-align:center;margin-bottom:32px">
+      <div style="font-size:40px;margin-bottom:8px">🦙</div>
+      <h1 style="font-family:'DM Serif Display',serif;font-size:24px;font-weight:400;color:#0f172a;margin:0 0 6px">Doctoralia Local</h1>
+      <p style="font-size:14px;color:#64748b;margin:0">IA 100% en tu ordenador · Sin costes · Sin datos en la nube</p>
     </div>
-    <div id="ob2" style="display:none">
-      <div class="onboard-icon">⚙️</div>
-      <h2>Instala Ollama primero</h2>
-      <p>Ollama es el servidor local que gestiona los modelos de IA. Necesitas tenerlo instalado y en ejecución.</p>
-      <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:var(--r);padding:14px;text-align:left;margin-bottom:20px;font-size:13px;color:var(--t2);line-height:1.9">
-        1️⃣ Descarga Ollama desde <a href="https://ollama.com" target="_blank" style="color:var(--accent)">ollama.com</a><br>
-        2️⃣ Instálalo y ejecútalo (queda en background)<br>
-        3️⃣ Elige un modelo en el panel de configuración<br>
-        4️⃣ Copia el comando <code style="background:#e0f2fe;padding:1px 5px;border-radius:3px">ollama pull &lt;modelo&gt;</code> y ejecútalo en tu terminal<br>
-        5️⃣ ¡Listo! El botón <strong>Probar conexión</strong> confirmará que todo funciona
+
+    <!-- STEP 1: Hardware detect -->
+    <div id="sw-step1" class="sw-card" style="background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:24px;margin-bottom:12px">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+        <div id="sw-s1-num" style="width:28px;height:28px;border-radius:50%;background:#2563eb;color:#fff;font-size:13px;font-weight:500;display:flex;align-items:center;justify-content:center;flex-shrink:0">1</div>
+        <div style="flex:1">
+          <div style="font-size:15px;font-weight:500;color:#0f172a">Detecta tu ordenador</div>
+          <div style="font-size:12px;color:#94a3b8" id="sw-s1-sub">Sabemos qué modelo de IA te va mejor</div>
+        </div>
+        <button id="sw-detect-btn" onclick="swDetectHardware()" style="background:#2563eb;color:#fff;border:none;border-radius:8px;padding:8px 16px;font-size:13px;cursor:pointer;white-space:nowrap;font-family:inherit">Detectar</button>
       </div>
-      <div style="display:flex;gap:10px">
-        <button class="btn" style="flex:1" onclick="nextOnboard(1)">← Atrás</button>
-        <button class="btn btn-primary" style="flex:2;padding:12px" onclick="nextOnboard(3)">Continuar →</button>
-      </div>
-    </div>
-    <div id="ob3" style="display:none">
-      <div class="onboard-icon">🚀</div>
-      <h2>Listo para empezar</h2>
-      <p>Abre el HTML con un servidor local (no con file://) para que las APIs académicas funcionen correctamente.</p>
-      <div style="background:#f7f8fa;border:1px solid var(--border);border-radius:var(--r);padding:14px;text-align:left;margin-bottom:20px;font-size:13px;color:var(--t2);line-height:1.9">
-        💡 <strong>Servidor local rápido:</strong><br>
-        <code style="background:#e0f2fe;padding:2px 7px;border-radius:3px">python3 -m http.server 8080</code><br>
-        Luego abre <code style="background:#e0f2fe;padding:2px 7px;border-radius:3px">http://localhost:8080</code><br><br>
-        ⚠️ Ollama debe estar corriendo en <code style="background:#e0f2fe;padding:2px 7px;border-radius:3px">localhost:11434</code>
-      </div>
-      <div style="display:flex;gap:10px">
-        <button class="btn" style="flex:1" onclick="nextOnboard(2)">← Atrás</button>
-        <button class="btn btn-primary" style="flex:2;padding:12px" onclick="closeOnboard()">🦙 Comenzar</button>
+      <!-- Resultado hardware -->
+      <div id="sw-hw-result" style="display:none;background:#f8fafc;border-radius:10px;padding:12px 14px;font-size:13px;color:#475569;display:none">
+        <span id="sw-hw-text"></span>
       </div>
     </div>
-    <div class="onboard-dots" style="margin-top:20px;margin-bottom:0">
-      <div class="odot active" id="od1"></div>
-      <div class="odot" id="od2"></div>
-      <div class="odot" id="od3"></div>
+
+    <!-- STEP 2: Modelo recomendado -->
+    <div id="sw-step2" style="background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:24px;margin-bottom:12px;opacity:.4;pointer-events:none;transition:opacity .3s">
+      <div style="display:flex;align-items:flex-start;gap:12px">
+        <div style="width:28px;height:28px;border-radius:50%;background:#e2e8f0;color:#94a3b8;font-size:13px;font-weight:500;display:flex;align-items:center;justify-content:center;flex-shrink:0" id="sw-s2-num">2</div>
+        <div style="flex:1">
+          <div style="font-size:15px;font-weight:500;color:#0f172a;margin-bottom:4px">Modelo recomendado para ti</div>
+          <div id="sw-model-display" style="font-size:13px;color:#64748b">Detecta tu hardware primero</div>
+          <!-- Modelo elegido -->
+          <div id="sw-model-chosen" style="display:none;margin-top:12px">
+            <div style="display:flex;align-items:center;gap:10px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:12px 14px">
+              <div style="font-size:22px">🦙</div>
+              <div style="flex:1">
+                <div style="font-size:14px;font-weight:500;color:#15803d" id="sw-model-name">llama3.2</div>
+                <div style="font-size:12px;color:#4ade80" id="sw-model-desc">Rápido · 2 GB · Recomendado para tu hardware</div>
+              </div>
+              <div style="font-size:11px;background:#15803d;color:#fff;padding:3px 8px;border-radius:20px">✓ elegido</div>
+            </div>
+            <!-- Cambiar modelo -->
+            <div style="margin-top:8px">
+              <button onclick="swToggleModelList()" style="background:none;border:none;font-size:12px;color:#2563eb;cursor:pointer;padding:0;font-family:inherit" id="sw-change-btn">▶ Ver otros modelos compatibles</button>
+              <div id="sw-model-list" style="display:none;margin-top:10px;display:none;flex-direction:column;gap:6px" id="sw-model-list"></div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
+
+    <!-- STEP 3: Comandos -->
+    <div id="sw-step3" style="background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:24px;margin-bottom:12px;opacity:.4;pointer-events:none;transition:opacity .3s">
+      <div style="display:flex;align-items:flex-start;gap:12px">
+        <div style="width:28px;height:28px;border-radius:50%;background:#e2e8f0;color:#94a3b8;font-size:13px;font-weight:500;display:flex;align-items:center;justify-content:center;flex-shrink:0" id="sw-s3-num">3</div>
+        <div style="flex:1">
+          <div style="font-size:15px;font-weight:500;color:#0f172a;margin-bottom:4px">Abre una terminal y ejecuta</div>
+          <div style="font-size:12px;color:#94a3b8;margin-bottom:14px" id="sw-os-label">Detectado: —</div>
+          <!-- Cmd 1: instalar Ollama -->
+          <div style="font-size:11px;color:#94a3b8;margin-bottom:4px">1 · Instala Ollama (solo la primera vez)</div>
+          <div id="sw-cmd1" onclick="swCopy(this)" style="background:#0f172a;border-radius:8px;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;margin-bottom:10px;gap:10px">
+            <code id="sw-cmd1-text" style="font-family:monospace;font-size:12px;color:#7dd3fc;flex:1"></code>
+            <span class="sw-copy-label" style="font-size:11px;color:#475569;flex-shrink:0">Copiar</span>
+          </div>
+          <!-- Cmd 2: descargar modelo -->
+          <div style="font-size:11px;color:#94a3b8;margin-bottom:4px">2 · Descarga el modelo</div>
+          <div id="sw-cmd2" onclick="swCopy(this)" style="background:#0f172a;border-radius:8px;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;gap:10px">
+            <code id="sw-cmd2-text" style="font-family:monospace;font-size:12px;color:#7dd3fc;flex:1"></code>
+            <span class="sw-copy-label" style="font-size:11px;color:#475569;flex-shrink:0">Copiar</span>
+          </div>
+          <div style="font-size:11px;color:#94a3b8;margin-top:8px">⏱ La descarga tarda 2-5 min según tu conexión</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 4: Conectar -->
+    <div id="sw-step4" style="background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:24px;margin-bottom:24px;opacity:.4;pointer-events:none;transition:opacity .3s">
+      <div style="display:flex;align-items:flex-start;gap:12px">
+        <div style="width:28px;height:28px;border-radius:50%;background:#e2e8f0;color:#94a3b8;font-size:13px;font-weight:500;display:flex;align-items:center;justify-content:center;flex-shrink:0" id="sw-s4-num">4</div>
+        <div style="flex:1">
+          <div style="font-size:15px;font-weight:500;color:#0f172a;margin-bottom:4px">Ya ejecuté los comandos</div>
+          <div style="font-size:13px;color:#64748b;margin-bottom:14px">Comprueba que Ollama está corriendo y entra a la app</div>
+          <button id="sw-connect-btn" onclick="swConnect()" style="width:100%;background:#2563eb;color:#fff;border:none;border-radius:10px;padding:13px;font-size:15px;font-weight:500;cursor:pointer;font-family:inherit">
+            Conectar con Ollama →
+          </button>
+          <div id="sw-connect-result" style="display:none;margin-top:10px;font-size:13px;padding:10px 14px;border-radius:8px"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div style="text-align:center;font-size:12px;color:#94a3b8">
+      ¿Ya tienes Ollama configurado?
+      <button onclick="swSkip()" style="background:none;border:none;color:#2563eb;font-size:12px;cursor:pointer;font-family:inherit;text-decoration:underline">Saltar setup →</button>
+    </div>
+
   </div>
 </div>
+
 
 <!-- ══════════════════════════════════════════════
      MAIN APP
@@ -1053,7 +1106,12 @@ document.addEventListener('DOMContentLoaded',()=>{
   if(savedHost)document.getElementById('ollamaHost').value=savedHost;
   const savedModel=localStorage.getItem('doctoralia_ollama_model');
   if(savedModel){document.getElementById('modelManual').value=savedModel;onModelChange();}
-  if(localStorage.getItem('doctoralia_onboard_done')){document.getElementById('onboardOverlay').style.display='none';}
+  if(localStorage.getItem('doctoralia_setup_done')){
+    document.getElementById('setupWizard').style.display='none';
+    setTimeout(()=>testOllamaConnection(),800);
+  }else{
+    swActivateStep(1);
+  }
   buildAgentTable();
   updateEstimate();
   renderHistory();
@@ -1071,9 +1129,273 @@ document.addEventListener('DOMContentLoaded',()=>{
 //  ONBOARDING
 // ═══════════════════════════════════════════════════
 let obStep=1;
-function nextOnboard(step){obStep=step;[1,2,3].forEach(i=>{document.getElementById('ob'+i).style.display='none';document.getElementById('od'+i).classList.remove('active');});document.getElementById('ob'+step).style.display='block';document.getElementById('od'+step).classList.add('active');}
-function closeOnboard(){document.getElementById('onboardOverlay').style.display='none';localStorage.setItem('doctoralia_onboard_done','1');}
-function openOnboard(){document.getElementById('onboardOverlay').style.display='flex';nextOnboard(1);}
+// ═══════════════════════════════════════════════════
+//  SETUP WIZARD — simplificado
+// ═══════════════════════════════════════════════════
+
+// Catálogo compacto ordenado por idoneidad
+const SW_MODELS=[
+  {id:'llama3.2:1b',  label:'Llama 3.2 1B',  gb:0.8, ram:4,  desc:'Ultra ligero · para <4GB RAM',    emoji:'⚡'},
+  {id:'llama3.2',     label:'Llama 3.2 3B',  gb:2.0, ram:4,  desc:'Rápido · recomendado para empezar',emoji:'🏎️'},
+  {id:'phi3.5',       label:'Phi-3.5 Mini',  gb:2.2, ram:4,  desc:'Rápido · muy bueno en ciencia',   emoji:'🔬'},
+  {id:'mistral',      label:'Mistral 7B',    gb:4.1, ram:8,  desc:'Buena escritura académica',        emoji:'📝'},
+  {id:'qwen2.5',      label:'Qwen 2.5 7B',  gb:4.7, ram:8,  desc:'Excelente en español',             emoji:'🌏'},
+  {id:'llama3.1',     label:'Llama 3.1 8B', gb:4.7, ram:8,  desc:'El más popular de Meta',           emoji:'⭐'},
+  {id:'qwen2.5:14b',  label:'Qwen 2.5 14B', gb:9.0, ram:16, desc:'Alta calidad en español',          emoji:'🏆'},
+  {id:'phi4',         label:'Phi-4 14B',    gb:9.1, ram:16, desc:'Razonamiento científico avanzado',  emoji:'🧠'},
+  {id:'deepseek-r1',  label:'DeepSeek-R1',  gb:4.7, ram:8,  desc:'Razonamiento paso a paso',         emoji:'🧩'},
+  {id:'gemma2',       label:'Gemma 2 9B',   gb:5.5, ram:10, desc:'Sólido · de Google',               emoji:'🟢'},
+];
+
+let swSelectedModel = null;
+let swDetectedRam   = 0;
+let swModelListOpen = false;
+
+// ── Activa visualmente un step ────────────────────
+function swActivateStep(n){
+  for(let i=1;i<=4;i++){
+    const el=document.getElementById('sw-step'+i);
+    if(!el)continue;
+    if(i<=n){el.style.opacity='1';el.style.pointerEvents='auto';}
+    // Marcar completados en verde
+    if(i<n){
+      const num=document.getElementById('sw-s'+i+'-num');
+      if(num){num.style.background='#15803d';num.textContent='✓';}
+    }
+    if(i===n){
+      const num=document.getElementById('sw-s'+i+'-num');
+      if(num){num.style.background='#2563eb';num.textContent=String(i);}
+    }
+  }
+}
+
+// ── PASO 1: Detectar hardware ─────────────────────
+async function swDetectHardware(){
+  const btn=document.getElementById('sw-detect-btn');
+  const sub=document.getElementById('sw-s1-sub');
+  btn.textContent='Detectando...';btn.disabled=true;
+
+  let ram=0, vram=0, gpuName='', isApple=false;
+
+  // RAM via deviceMemory
+  if(navigator.deviceMemory) ram=Math.max(navigator.deviceMemory,8);
+
+  // GPU via WebGL
+  try{
+    const c=document.createElement('canvas');
+    const gl=c.getContext('webgl')||c.getContext('experimental-webgl');
+    if(gl){
+      const ext=gl.getExtension('WEBGL_debug_renderer_info');
+      if(ext){
+        const r=gl.getParameter(ext.UNMASKED_RENDERER_WEBGL)||'';
+        const v=gl.getParameter(ext.UNMASKED_VENDOR_WEBGL)||'';
+        gpuName=r;
+        if(/apple/i.test(v)||/apple m[1-9]/i.test(r)){isApple=true;vram=Math.round((ram||16)*0.6);}
+        else if(/RTX 40[8-9]/i.test(r)||/RTX 40[7-9][0-9]/i.test(r))vram=16;
+        else if(/RTX 40[5-7]/i.test(r))vram=12;
+        else if(/RTX 30[7-9]/i.test(r)||/RTX 3090/i.test(r))vram=24;
+        else if(/RTX 30[5-6]/i.test(r))vram=8;
+        else if(/RTX 20[6-9]/i.test(r))vram=8;
+        else if(/GTX 16/i.test(r))vram=6;
+        else if(/GTX 10[6-9]/i.test(r))vram=6;
+        else if(/RX 7[89]/i.test(r)||/RX 69/i.test(r))vram=16;
+        else if(/RX [67][5-8]/i.test(r))vram=8;
+      }
+    }
+  }catch(e){}
+
+  // RAM fallback por núcleos
+  if(!ram){const cores=navigator.hardwareConcurrency||4;ram=cores>=12?32:cores>=8?16:cores>=4?8:4;}
+  swDetectedRam=ram;
+
+  // Resultado legible
+  const memDisplay=isApple?`${ram}GB memoria unificada (Apple Silicon)`:`${ram}GB RAM${vram?` · GPU ${vram}GB VRAM`:''}`;
+  const hwResultEl=document.getElementById('sw-hw-result');
+  hwResultEl.style.display='block';
+  hwResultEl.querySelector('#sw-hw-text').textContent=`✓ ${memDisplay}${gpuName?' · '+gpuName.slice(0,45):''}`;
+
+  btn.textContent='✓ Detectado';
+  btn.style.background='#15803d';
+  sub.textContent='Hardware detectado correctamente';
+
+  // Elegir modelo
+  swPickModel(ram,vram,isApple);
+  swActivateStep(2);
+  setTimeout(()=>swActivateStep(3),400);
+  setTimeout(()=>swActivateStep(4),600);
+}
+
+// ── PASO 2: Elegir modelo ─────────────────────────
+function swPickModel(ram,vram,isApple){
+  const mem=isApple?ram:Math.max(vram||0,ram*0.55);
+  // Mejor modelo que cabe cómodamente
+  const fits=SW_MODELS.filter(m=>ram>=m.ram&&mem>=m.gb*1.15);
+  // Preferir multilingüe si RAM ≥ 8
+  const preferred=fits.find(m=>m.id==='qwen2.5'&&ram>=8)
+    ||fits.find(m=>m.id==='llama3.2'&&ram>=4)
+    ||fits[fits.length-1]
+    ||SW_MODELS[1];
+
+  swSelectedModel=preferred;
+  document.getElementById('sw-model-chosen').style.display='block';
+  document.getElementById('sw-model-name').textContent=preferred.label;
+  document.getElementById('sw-model-desc').textContent=`${preferred.emoji} ${preferred.desc} · ${preferred.gb}GB descarga`;
+  document.getElementById('sw-model-display').textContent='Basado en tu hardware:';
+
+  // Rellena lista de alternativas
+  const list=document.getElementById('sw-model-list');
+  list.innerHTML=fits.filter(m=>m.id!==preferred.id).map(m=>`
+    <div onclick="swSelectModel('${m.id}')" style="display:flex;align-items:center;gap:10px;padding:9px 12px;border:1px solid #e2e8f0;border-radius:8px;cursor:pointer;transition:background .15s" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background=''">
+      <span style="font-size:16px">${m.emoji}</span>
+      <div style="flex:1">
+        <div style="font-size:13px;font-weight:500;color:#0f172a">${m.label}</div>
+        <div style="font-size:11px;color:#94a3b8">${m.desc} · ${m.gb}GB</div>
+      </div>
+      <span style="font-size:11px;color:#2563eb">Usar</span>
+    </div>`).join('');
+
+  // Comandos
+  swUpdateCommands(preferred.id);
+}
+
+function swSelectModel(id){
+  const m=SW_MODELS.find(x=>x.id===id)||SW_MODELS[1];
+  swSelectedModel=m;
+  document.getElementById('sw-model-name').textContent=m.label;
+  document.getElementById('sw-model-desc').textContent=`${m.emoji} ${m.desc} · ${m.gb}GB descarga`;
+  swUpdateCommands(m.id);
+  // Colapsar lista
+  document.getElementById('sw-model-list').style.display='none';
+  document.getElementById('sw-change-btn').textContent='▶ Ver otros modelos compatibles';
+  swModelListOpen=false;
+  // Guardar
+  document.getElementById('modelManual').value=m.id;
+  onModelChange();
+}
+
+function swToggleModelList(){
+  swModelListOpen=!swModelListOpen;
+  const list=document.getElementById('sw-model-list');
+  const btn=document.getElementById('sw-change-btn');
+  list.style.display=swModelListOpen?'flex':'none';
+  btn.textContent=swModelListOpen?'▼ Ocultar opciones':'▶ Ver otros modelos compatibles';
+}
+
+// ── PASO 3: Comandos según OS ─────────────────────
+function swUpdateCommands(modelId){
+  const os=swDetectOS();
+  const cmd1El=document.getElementById('sw-cmd1-text');
+  const cmd2El=document.getElementById('sw-cmd2-text');
+  const osLabel=document.getElementById('sw-os-label');
+  const cmds={
+    mac:  {label:'macOS detectado',     install:'brew install ollama   # o descarga en ollama.com'},
+    win:  {label:'Windows detectado',   install:'winget install Ollama.Ollama'},
+    linux:{label:'Linux detectado',     install:'curl -fsSL https://ollama.com/install.sh | sh'},
+  };
+  const c=cmds[os]||cmds.linux;
+  osLabel.textContent=c.label;
+  cmd1El.textContent=c.install;
+  cmd2El.textContent=`ollama run ${modelId}`;
+  // Guardar modelo
+  document.getElementById('modelManual').value=modelId;
+  onModelChange();
+}
+
+function swDetectOS(){
+  const ua=navigator.userAgent;
+  if(/Mac/i.test(ua))return 'mac';
+  if(/Win/i.test(ua))return 'win';
+  return 'linux';
+}
+
+// ── PASO 3: Copiar comando ────────────────────────
+function swCopy(block){
+  const code=block.querySelector('code');
+  if(!code)return;
+  // Limpiar comentarios al copiar (ej. "# o descarga en ollama.com")
+  const text=code.textContent.split('#')[0].trim();
+  navigator.clipboard.writeText(text).then(()=>{
+    const label=block.querySelector('.sw-copy-label');
+    const orig=label.textContent;
+    label.textContent='✓ Copiado';
+    label.style.color='#4ade80';
+    block.style.background='#14532d';
+    setTimeout(()=>{label.textContent=orig;label.style.color='';block.style.background='#0f172a';},2000);
+  });
+}
+
+// ── PASO 4: Conectar ──────────────────────────────
+async function swConnect(){
+  const btn=document.getElementById('sw-connect-btn');
+  const result=document.getElementById('sw-connect-result');
+  btn.textContent='Conectando...';btn.disabled=true;
+  result.style.display='none';
+
+  const host=getOllamaHost();
+  try{
+    const r=await fetch(`${host}/api/tags`,{signal:AbortSignal.timeout(6000)});
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    const data=await r.json();
+    const models=(data.models||[]).map(m=>m.name);
+    if(models.length){
+      // ¡Conectado! Guardar estado y cerrar wizard
+      localStorage.setItem('doctoralia_setup_done','1');
+      if(swSelectedModel){
+        localStorage.setItem('doctoralia_ollama_model',swSelectedModel.id);
+        document.getElementById('modelManual').value=swSelectedModel.id;
+        onModelChange();
+      }
+      // Actualizar selector con modelos instalados
+      const sel=document.getElementById('model');
+      if(sel)sel.innerHTML=models.map(m=>`<option value="${m}">${m}</option>`).join('');
+      showInstalledModels(models);
+      swClose();
+    }else{
+      // Ollama corre pero sin modelos
+      result.style.display='block';
+      result.style.cssText='display:block;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:10px 14px;margin-top:10px;font-size:13px;color:#92400e';
+      result.innerHTML=`⚠️ Ollama está corriendo pero no tiene modelos.<br>Ejecuta en terminal: <code style="background:#fef3c7;padding:2px 6px;border-radius:4px">ollama run ${swSelectedModel?swSelectedModel.id:'llama3.2'}</code>`;
+      btn.textContent='Reintentar';btn.disabled=false;
+    }
+  }catch(e){
+    result.style.display='block';
+    const isHttps=location.protocol==='https:';
+    const origin=location.origin;
+    result.style.cssText='display:block;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:12px 14px;margin-top:10px;font-size:13px;color:#7f1d1d;line-height:1.6';
+    if(isHttps){
+      result.innerHTML=`🔒 <strong>La página está en HTTPS</strong> — Ollama corre en HTTP local.<br><br>
+      Abre una terminal y ejecuta:<br>
+      <code style="background:#fee2e2;padding:2px 6px;border-radius:4px;display:inline-block;margin-top:4px">OLLAMA_ORIGINS="${origin}" ollama serve</code><br><br>
+      Luego pulsa "Reintentar".`;
+    }else{
+      result.innerHTML=`❌ No se puede conectar a Ollama.<br>¿Ejecutaste los dos comandos del paso 3? ¿Está Ollama corriendo?<br><br>
+      Prueba: <code style="background:#fee2e2;padding:2px 6px;border-radius:4px">ollama serve</code>`;
+    }
+    btn.textContent='Reintentar';btn.disabled=false;
+  }
+}
+
+// ── Cerrar wizard ─────────────────────────────────
+function swClose(){
+  const wiz=document.getElementById('setupWizard');
+  if(wiz){wiz.style.opacity='0';wiz.style.transition='opacity .4s';setTimeout(()=>wiz.style.display='none',400);}
+  log('✅ Setup completado. ¡Bienvenido a Doctoralia Local!','ok');
+}
+
+function swSkip(){
+  localStorage.setItem('doctoralia_setup_done','1');
+  swClose();
+  setTimeout(()=>testOllamaConnection(),600);
+}
+
+// ── Reabrir setup desde el menú ──────────────────
+function openOnboard(){
+  const wiz=document.getElementById('setupWizard');
+  if(wiz){wiz.style.display='flex';wiz.style.opacity='1';}
+}
+function closeOnboard(){swClose();}
+
+
 
 // ═══════════════════════════════════════════════════
 //  MAIN NAV
