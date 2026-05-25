@@ -1331,15 +1331,16 @@ async function swConnect(){
   btn.textContent='Conectando...';btn.disabled=true;
   result.style.display='none';
 
-  const host=getOllamaHost();
+  // Inline host resolution — no depende de getOllamaHost()
+  const hostEl=document.getElementById('ollamaHost');
+  const host=(hostEl?hostEl.value.trim():'')||'http://localhost:11434';
   const isHttps=location.protocol==='https:';
-  const hostIsHttp=host.startsWith('http://');
   const origin=location.origin;
 
   // ── Detección inmediata de Mixed Content ──────────
   // Si la página está en HTTPS y Ollama en HTTP, el navegador
   // bloqueará la request sin llegar a Ollama. Lo detectamos antes.
-  if(isHttps && hostIsHttp){
+  if(isHttps && host.startsWith('http://')){
     btn.textContent='Reintentar';btn.disabled=false;
     result.style.display='block';
     result.style.cssText='display:block;background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:16px;margin-top:10px;font-size:13px;color:#1e3a5f;line-height:1.8';
