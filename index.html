@@ -1332,47 +1332,66 @@ async function swConnect(){
   result.style.display='none';
 
   const host=getOllamaHost();
+  const isHttps=location.protocol==='https:';
+  const hostIsHttp=host.startsWith('http://');
+  const origin=location.origin;
+
+  // ── Detección inmediata de Mixed Content ──────────
+  // Si la página está en HTTPS y Ollama en HTTP, el navegador
+  // bloqueará la request sin llegar a Ollama. Lo detectamos antes.
+  if(isHttps && hostIsHttp){
+    btn.textContent='Reintentar';btn.disabled=false;
+    result.style.display='block';
+    result.style.cssText='display:block;background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:16px;margin-top:10px;font-size:13px;color:#1e3a5f;line-height:1.8';
+    result.innerHTML=`
+      <div style="font-size:14px;font-weight:500;margin-bottom:10px">🔒 Un paso extra en Mac</div>
+      <div style="margin-bottom:12px;color:#334155">Esta web usa HTTPS y Ollama usa HTTP local. Hay que decirle a Ollama que acepte esta web. <strong>Solo hay que hacerlo una vez.</strong></div>
+      <div style="font-size:11px;color:#64748b;margin-bottom:6px">1 · Cierra Ollama (icono en la barra de menú → Quit)</div>
+      <div style="font-size:11px;color:#64748b;margin-bottom:6px">2 · Abre Terminal y ejecuta:</div>
+      <div onclick="swCopyText(this,'OLLAMA_ORIGINS=${origin} ollama serve')" style="background:#0f172a;border-radius:8px;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;margin-bottom:12px;gap:10px">
+        <code style="font-family:monospace;font-size:12px;color:#7dd3fc;flex:1;word-break:break-all">OLLAMA_ORIGINS=${origin} ollama serve</code>
+        <span style="font-size:11px;color:#475569;flex-shrink:0">Copiar</span>
+      </div>
+      <div style="font-size:11px;color:#64748b;margin-bottom:4px">3 · Deja la terminal abierta y pulsa <strong>Reintentar</strong></div>`;
+    return;
+  }
+
+  // ── Intento real de conexión ───────────────────────
   try{
     const r=await fetch(`${host}/api/tags`,{signal:AbortSignal.timeout(6000)});
     if(!r.ok)throw new Error('HTTP '+r.status);
     const data=await r.json();
     const models=(data.models||[]).map(m=>m.name);
     if(models.length){
-      // ¡Conectado! Guardar estado y cerrar wizard
       localStorage.setItem('doctoralia_setup_done','1');
       if(swSelectedModel){
         localStorage.setItem('doctoralia_ollama_model',swSelectedModel.id);
         document.getElementById('modelManual').value=swSelectedModel.id;
         onModelChange();
       }
-      // Actualizar selector con modelos instalados
       const sel=document.getElementById('model');
       if(sel)sel.innerHTML=models.map(m=>`<option value="${m}">${m}</option>`).join('');
       showInstalledModels(models);
       swClose();
     }else{
-      // Ollama corre pero sin modelos
       result.style.display='block';
-      result.style.cssText='display:block;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:10px 14px;margin-top:10px;font-size:13px;color:#92400e';
-      result.innerHTML=`⚠️ Ollama está corriendo pero no tiene modelos.<br>Ejecuta en terminal: <code style="background:#fef3c7;padding:2px 6px;border-radius:4px">ollama run ${swSelectedModel?swSelectedModel.id:'llama3.2'}</code>`;
+      result.style.cssText='display:block;background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:12px 14px;margin-top:10px;font-size:13px;color:#92400e';
+      result.innerHTML=`⚠️ Ollama está corriendo pero sin modelos.<br>En la terminal ejecuta: <code style="background:#fef3c7;padding:2px 6px;border-radius:4px">ollama run ${swSelectedModel?swSelectedModel.id:'llama3.2'}</code>`;
       btn.textContent='Reintentar';btn.disabled=false;
     }
   }catch(e){
     result.style.display='block';
-    const isHttps=location.protocol==='https:';
-    const origin=location.origin;
-    result.style.cssText='display:block;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:12px 14px;margin-top:10px;font-size:13px;color:#7f1d1d;line-height:1.6';
-    if(isHttps){
-      result.innerHTML=`🔒 <strong>La página está en HTTPS</strong> — Ollama corre en HTTP local.<br><br>
-      Abre una terminal y ejecuta:<br>
-      <code style="background:#fee2e2;padding:2px 6px;border-radius:4px;display:inline-block;margin-top:4px">OLLAMA_ORIGINS="${origin}" ollama serve</code><br><br>
-      Luego pulsa "Reintentar".`;
-    }else{
-      result.innerHTML=`❌ No se puede conectar a Ollama.<br>¿Ejecutaste los dos comandos del paso 3? ¿Está Ollama corriendo?<br><br>
-      Prueba: <code style="background:#fee2e2;padding:2px 6px;border-radius:4px">ollama serve</code>`;
-    }
+    result.style.cssText='display:block;background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:12px 14px;margin-top:10px;font-size:13px;color:#7f1d1d;line-height:1.6';
+    result.innerHTML=`❌ No se puede conectar a Ollama.<br>¿Está corriendo? Prueba en terminal: <code style="background:#fee2e2;padding:2px 6px;border-radius:4px">ollama serve</code>`;
     btn.textContent='Reintentar';btn.disabled=false;
   }
+}
+
+function swCopyText(block, text){
+  navigator.clipboard.writeText(text).then(()=>{
+    const span=block.querySelector('span');
+    if(span){const o=span.textContent;span.textContent='✓ Copiado';span.style.color='#4ade80';block.style.background='#14532d';setTimeout(()=>{span.textContent=o;span.style.color='';block.style.background='#0f172a';},2000);}
+  });
 }
 
 // ── Cerrar wizard ─────────────────────────────────
