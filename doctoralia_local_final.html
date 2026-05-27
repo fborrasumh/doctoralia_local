@@ -1,0 +1,2993 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob:; connect-src *; img-src * data: blob:; font-src * data:;">
+<title>Doctoralia Local — Review Generator</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --accent:#2563eb;--accent-dim:#1d4ed8;
+  --teal:#059669;--teal-dim:#047857;
+  --amber:#d97706;--red:#dc2626;--green:#16a34a;
+  --surface:#f7f8fa;--s2:#ffffff;--s3:#f3f4f6;
+  --border:#e5e7eb;--bhi:#d1d5db;
+  --text:#111827;--t2:#4b5563;--t3:#9ca3af;
+  --shadow:0 1px 3px rgba(0,0,0,.06),0 1px 2px rgba(0,0,0,.04);
+  --shadow-md:0 4px 16px rgba(0,0,0,.08),0 2px 4px rgba(0,0,0,.04);
+  --ff:'DM Sans',system-ui,sans-serif;
+  --serif:'DM Serif Display',Georgia,serif;
+  --r:8px;--rl:12px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--ff);background:var(--surface);color:var(--text);min-height:100vh;font-size:14px;line-height:1.6;-webkit-font-smoothing:antialiased}
+
+/* ── LAYOUT ── */
+.app{display:flex;min-height:100vh}
+.sidebar{width:255px;flex-shrink:0;background:#ffffff;border-right:1px solid var(--border);box-shadow:1px 0 0 var(--border);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto}
+.main{flex:1;display:flex;flex-direction:column;min-width:0;overflow:hidden}
+
+/* ── SIDEBAR ── */
+.logo{padding:20px 18px 16px;border-bottom:1px solid var(--border)}
+.logo-row{display:flex;align-items:center;gap:10px}
+.logo-icon{width:34px;height:34px;background:linear-gradient(135deg,var(--accent),var(--teal));border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:17px}
+.logo h1{font-family:var(--serif);font-size:17px;color:var(--text);font-weight:400}
+.logo span{font-size:10px;color:var(--t3);letter-spacing:.08em;text-transform:uppercase}
+.snav{padding:16px 18px 6px;font-size:10px;color:var(--t3);letter-spacing:.1em;text-transform:uppercase;font-weight:500}
+.ni-item{display:flex;align-items:center;gap:9px;padding:8px 18px;font-size:13px;color:var(--t2);cursor:pointer;transition:all .15s;border-left:2px solid transparent}
+.ni-item:hover{background:#f3f4f6;color:var(--text)}
+.ni-item.active{background:#eff6ff;color:var(--accent);border-left-color:var(--accent)}
+.ni-item .ni{font-size:14px;width:17px;text-align:center}
+.sidebar-footer{margin-top:auto;padding:14px 18px;border-top:1px solid var(--border);background:#fafafa}
+.user-row{display:flex;align-items:center;gap:9px}
+.avatar{width:30px;height:30px;border-radius:50%;background:#eff6ff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;color:var(--accent);border:1px solid #bfdbfe}
+.un{font-size:13px;color:var(--text);font-weight:500}.up{font-size:11px;color:var(--t3)}
+
+/* ── TOPBAR ── */
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:13px 28px;border-bottom:1px solid var(--border);background:#ffffff;position:sticky;box-shadow:0 1px 0 var(--border);top:0;z-index:20;gap:12px}
+.topbar h2{font-family:var(--serif);font-size:18px;font-weight:400;color:var(--text);white-space:nowrap}
+.topbar p{font-size:11px;color:var(--t3);margin-top:1px}
+.topbar-actions{display:flex;gap:8px;flex-shrink:0}
+
+/* ── BUTTONS ── */
+button{font-family:var(--ff);cursor:pointer;border:none;transition:all .15s}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;font-size:13px;border-radius:var(--r);border:1px solid var(--bhi);background:transparent;color:var(--t2)}
+.btn:hover{background:#f3f4f6;color:var(--text)}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn-primary{background:linear-gradient(135deg,var(--accent),var(--teal));border-color:var(--accent);color:#fff}
+.btn-primary:hover:not(:disabled){background:var(--accent-dim)}
+.btn-danger{border-color:rgba(226,75,74,.4);color:var(--red)}
+.btn-danger:hover{background:rgba(226,75,74,.1)}
+.btn-success{background:var(--teal);border-color:var(--teal);color:#fff}
+.btn-success:hover:not(:disabled){background:var(--teal-dim)}
+.btn-amber{background:rgba(245,158,11,.15);border-color:rgba(245,158,11,.4);color:var(--amber)}
+.btn-amber:hover:not(:disabled){background:rgba(245,158,11,.25)}
+.btn-ghost{background:transparent;border:1px solid var(--border);color:var(--t2);padding:5px 10px;font-size:12px;border-radius:6px}
+.btn-ghost:hover{background:#f3f4f6;color:var(--text)}
+.btn-stop{background:transparent;border:1px solid rgba(220,38,38,.5);color:var(--red)}
+.btn-stop:hover:not(:disabled){background:rgba(220,38,38,.08);border-color:var(--red)}
+.btn-stop:disabled{opacity:.35;cursor:not-allowed}
+
+/* ── TABS ── */
+.tabs{display:flex;border-bottom:1px solid var(--border);padding:0 28px;background:#ffffff;overflow-x:auto;flex-shrink:0}
+.tab{padding:11px 14px;font-size:13px;color:var(--t3);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;white-space:nowrap;display:flex;align-items:center;gap:5px;margin-bottom:-1px;position:relative}
+.tab:hover{color:var(--text)}.tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+.tab-badge{position:absolute;top:6px;right:4px;width:6px;height:6px;border-radius:50%;background:var(--teal)}
+.tc{display:none}.tc.active{display:block}
+.content{padding:24px 28px;flex:1;overflow-y:auto}
+
+/* ── ONBOARDING OVERLAY ── */
+.onboard-overlay{position:fixed;inset:0;background:rgba(17,24,39,.65);z-index:1000;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(6px)}
+.onboard-box{background:#ffffff;border:1px solid var(--border);box-shadow:var(--shadow);border-radius:20px;padding:40px;max-width:520px;width:90%;text-align:center}
+.onboard-icon{font-size:48px;margin-bottom:16px}
+.onboard-box h2{font-family:var(--serif);font-size:24px;font-weight:400;margin-bottom:8px}
+.onboard-box p{font-size:14px;color:var(--t2);line-height:1.7;margin-bottom:24px}
+.onboard-dots{display:flex;justify-content:center;gap:6px;margin-bottom:24px}
+.odot{width:8px;height:8px;border-radius:50%;background:#d1d5db}
+.odot.active{background:linear-gradient(135deg,var(--accent),var(--teal))}
+.onboard-steps{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:28px;text-align:left}
+.ostep{background:#eff6ff;border:1px solid #bfdbfe;border-radius:var(--r);padding:14px}
+.ostep-icon{font-size:22px;margin-bottom:6px}
+.ostep-title{font-size:13px;font-weight:500;color:var(--text);margin-bottom:3px}
+.ostep-desc{font-size:11px;color:var(--t2);line-height:1.5}
+
+/* ── WIZARD ── */
+.wizard-steps{display:flex;gap:0;margin-bottom:28px;border-radius:var(--r);overflow:hidden;border:1px solid var(--border);background:#f3f4f6}
+.wstep{flex:1;padding:12px 8px;text-align:center;font-size:12px;color:var(--t3);background:#f7f8fa;border-right:1px solid var(--border);cursor:pointer;transition:all .2s;position:relative}
+.wstep:last-child{border-right:none}
+.wstep.active{background:#eff6ff;color:var(--accent)}
+.wstep.done{background:#f0fdf4;color:var(--teal)}
+.wstep-num{width:20px;height:20px;border-radius:50%;background:currentColor;color:#ffffff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;margin:0 auto 4px;opacity:.7}
+.wstep.active .wstep-num,.wstep.done .wstep-num{opacity:1}
+.wizard-panel{display:none}.wizard-panel.active{display:block}
+.wizard-nav{display:flex;justify-content:space-between;align-items:center;margin-top:24px;padding-top:16px;border-top:1px solid var(--border)}
+
+/* ── PRESETS ── */
+.presets{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:20px}
+.preset-card{background:#ffffff;border:2px solid var(--border);box-shadow:var(--shadow);border-radius:var(--rl);padding:16px;cursor:pointer;transition:all .2s;text-align:center}
+.preset-card:hover{border-color:var(--bhi)}
+.preset-card.selected{border-color:var(--accent);background:#eff6ff}
+.preset-icon{font-size:28px;margin-bottom:8px}
+.preset-name{font-size:14px;font-weight:500;color:var(--text);margin-bottom:4px}
+.preset-desc{font-size:11px;color:var(--t2);line-height:1.5;margin-bottom:8px}
+.preset-tags{display:flex;gap:4px;flex-wrap:wrap;justify-content:center}
+.ptag{font-size:10px;padding:2px 7px;border-radius:10px;background:#dbeafe;color:var(--accent)}
+
+/* ── COST ESTIMATOR ── */
+.cost-box{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:var(--r);padding:14px 18px;display:flex;align-items:center;gap:20px;flex-wrap:wrap;margin-bottom:20px}
+.cost-item{display:flex;flex-direction:column;gap:2px}
+.cost-val{font-size:18px;font-weight:500;color:var(--teal);font-family:var(--serif)}
+.cost-lbl{font-size:11px;color:var(--t3)}
+.cost-sep{width:1px;height:36px;background:var(--border)}
+.cost-warn{font-size:11px;color:var(--t2);flex:1;min-width:160px}
+
+/* ── FORMS ── */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.form-full{grid-column:1/-1}
+.field{display:flex;flex-direction:column;gap:4px;position:relative}
+label{font-size:12px;color:var(--t2);font-weight:500;display:flex;align-items:center;gap:5px}
+label .req{color:var(--red)}
+input[type=text],input[type=password],input[type=number],input[type=email],select,textarea{
+  width:100%;background:#ffffff;border:1px solid var(--border);border-radius:var(--r);
+  padding:8px 11px;font-size:13px;color:var(--text);font-family:var(--ff);transition:border-color .15s}
+input[type=number]{-moz-appearance:textfield}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(37,99,235,.12)}
+select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 9px center;padding-right:28px}
+textarea{resize:vertical;min-height:68px}
+.hint{font-size:10px;color:var(--t3);margin-top:3px}
+
+/* ── TOOLTIP ── */
+.tooltip-wrap{position:relative;display:inline-flex;align-items:center}
+.tip-icon{width:15px;height:15px;border-radius:50%;background:#f3f4f6;border:1px solid var(--border);font-size:9px;color:var(--t3);display:inline-flex;align-items:center;justify-content:center;cursor:help;flex-shrink:0}
+.tip-icon:hover{border-color:var(--accent);color:var(--accent)}
+.tip-box{position:absolute;left:20px;top:-4px;background:#ffffff;border:1px solid var(--border);box-shadow:var(--shadow);border-radius:8px;padding:10px 12px;font-size:11px;color:var(--t2);width:220px;z-index:100;line-height:1.5;display:none;box-shadow:var(--shadow-md)}
+.tooltip-wrap:hover .tip-box{display:block}
+
+/* ── SLIDER ── */
+.slider-row{display:flex;align-items:center;gap:11px}
+.slider-row input[type=range]{flex:1;background:transparent;border:none;padding:0;accent-color:var(--accent);height:4px}
+.slider-val{font-size:13px;font-weight:500;color:var(--accent);min-width:95px;text-align:right}
+
+/* ── TOGGLE ── */
+.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)}
+.toggle-row:last-child{border-bottom:none}
+.tl{font-size:13px;color:var(--text)}.ts{font-size:11px;color:var(--t3)}
+.tsw{width:40px;height:22px;border-radius:11px;background:#d1d5db;border:1px solid #d1d5db;position:relative;cursor:pointer;transition:background .2s;flex-shrink:0}
+.tsw.on{background:linear-gradient(135deg,var(--accent),var(--teal));border-color:var(--accent)}
+.tsw::after{content:'';position:absolute;width:16px;height:16px;background:#fff;border-radius:50%;top:2px;left:2px;transition:left .2s;box-shadow:0 1px 3px rgba(0,0,0,.3)}
+.tsw.on::after{left:20px}
+
+/* ── SECTION HEAD ── */
+.sh{font-size:11px;font-weight:500;color:var(--t3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:11px;margin-top:22px;padding-bottom:6px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:7px}
+.sh button{margin-left:auto;font-size:11px;color:var(--accent);cursor:pointer;background:none;border:none;font-family:var(--ff);padding:0}
+.sh button:hover{text-decoration:underline}
+.divider{height:1px;background:var(--border);margin:18px 0}
+.adv-toggle{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--accent);cursor:pointer;padding:8px 0;user-select:none}
+.adv-toggle:hover{color:var(--text)}
+.adv-body{display:none}.adv-body.open{display:block}
+
+/* ── API KEY PANEL ── */
+.apikey-panel{background:#eff6ff;border:1px solid #d1d5db;border-radius:var(--rl);padding:16px 20px;margin-bottom:20px}
+.apikey-header{display:flex;align-items:center;gap:9px;margin-bottom:10px}
+.apikey-header h3{font-size:14px;font-weight:500;color:var(--text)}
+.apikey-body{display:flex;gap:8px;align-items:flex-end}
+.apikey-body .field{flex:1}
+.privacy-note{font-size:11px;color:var(--teal);margin-top:6px;display:flex;align-items:center;gap:5px}
+
+/* ── SOURCE CARDS ── */
+.source-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.sc{background:#ffffff;border:1px solid var(--border);border-radius:var(--r);padding:12px;transition:all .15s;box-shadow:var(--shadow)}
+.sc.on{border-color:var(--accent);background:#eff6ff}
+.sc-head{display:flex;align-items:center;gap:7px;margin-bottom:8px;cursor:pointer}
+.sc-head input[type=checkbox]{accent-color:var(--accent);width:14px;height:14px;cursor:pointer}
+.sc-name{font-size:13px;font-weight:500;color:var(--text)}.sc-sub{font-size:10px;color:var(--t3)}
+.sc-ico{font-size:16px}
+.sc-field label{font-size:11px;color:var(--t3)}
+.sc-field input{margin-top:3px;padding:5px 9px;font-size:12px}
+
+/* ── AGENT TABLE ── */
+.at-wrap{background:#ffffff;border:1px solid var(--border);border-radius:var(--r);overflow:hidden;box-shadow:var(--shadow)}
+.at{width:100%;border-collapse:collapse;font-size:12px}
+.at th{text-align:left;padding:7px 11px;color:var(--t3);font-weight:500;border-bottom:1px solid var(--border);font-size:10px;text-transform:uppercase;letter-spacing:.06em;background:#f7f8fa}
+.at td{padding:6px 11px;border-bottom:1px solid var(--border);vertical-align:middle}
+.at tr:last-child td{border-bottom:none}.at tr:hover td{background:rgba(37,99,235,.02)}
+.at input[type=number]{width:75px;padding:4px 7px;font-size:12px;background:#ffffff;border:1px solid var(--border);border-radius:6px;color:var(--text)}
+.badge{display:inline-block;font-size:9px;padding:2px 6px;border-radius:8px;font-weight:500}
+.b-r{background:rgba(37,99,235,.1);color:var(--accent)}.b-w{background:rgba(15,168,138,.15);color:var(--teal)}
+.b-v{background:rgba(245,158,11,.15);color:var(--amber)}.b-p{background:rgba(34,197,94,.15);color:var(--green)}
+.b-a{background:rgba(226,75,74,.15);color:var(--red)}
+
+/* ── PIPELINE PHASES ── */
+.phases{display:flex;margin-bottom:16px}
+.ph{flex:1;text-align:center;padding:8px 4px;background:#f3f4f6;border:1px solid var(--border);border-right:none;font-size:10px;color:var(--t3);transition:all .3s}
+.ph:first-child{border-radius:var(--r) 0 0 var(--r)}.ph:last-child{border-right:1px solid var(--border);border-radius:0 var(--r) var(--r) 0}
+.ph.active{background:#eff6ff;border-color:var(--accent);color:var(--accent)}
+.ph.done{background:#f0fdf4;border-color:var(--teal);color:var(--teal)}
+.pnum{width:20px;height:20px;border-radius:50%;background:currentColor;color:#ffffff;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;margin:0 auto 3px;opacity:.5}
+.ph.active .pnum,.ph.done .pnum{opacity:1}
+
+/* ── HUMAN PROGRESS ── */
+.human-progress{background:#ffffff;border:1px solid var(--border);box-shadow:var(--shadow);border-radius:var(--r);padding:16px 18px;margin-bottom:14px;display:none}
+.human-progress.v{display:block}
+.hp-step{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.hp-step:last-child{margin-bottom:0}
+.hp-dot{width:8px;height:8px;border-radius:50%;background:#d1d5db;flex-shrink:0}
+.hp-dot.done{background:var(--teal)}.hp-dot.active{background:linear-gradient(135deg,var(--accent),var(--teal))}
+.hp-text{font-size:13px;color:var(--t3)}.hp-text.done{color:var(--teal)}.hp-text.active{color:var(--text)}
+.prog-bar-wrap{height:3px;background:#e5e7eb;border-radius:2px;margin-top:12px}
+.prog-fill{height:100%;background:linear-gradient(135deg,var(--accent),var(--teal));border-radius:2px;transition:width .5s ease;width:0%}
+/* LOG (collapsible) */
+.log-wrap{margin-top:10px}
+.log-toggle{font-size:11px;color:var(--t3);cursor:pointer;display:flex;align-items:center;gap:4px;padding:4px 0;user-select:none}
+.log-toggle:hover{color:var(--t2)}
+.log{background:#f7f8fa;border:1px solid var(--border);border-radius:var(--r);padding:10px 12px;font-size:11px;max-height:150px;overflow-y:auto;color:var(--t2);font-family:'Courier New',monospace;display:none}
+.log.open{display:block}
+.ll{padding:1px 0;border-bottom:1px solid rgba(255,255,255,.02)}
+.ll.ok{color:#059669}.ll.info{color:#2563eb}.ll.warn{color:#d97706}.ll.err{color:#dc2626}
+
+/* ── OUTPUT AREA ── */
+.out-area{background:#ffffff;border:1px solid var(--border);border-radius:var(--rl);padding:24px 28px;font-size:14px;box-shadow:var(--shadow);line-height:1.8;color:var(--text);white-space:pre-wrap;min-height:200px}
+.placeholder{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:240px;color:var(--t3);gap:9px;text-align:center}
+.placeholder .bi{font-size:36px}
+.placeholder p{font-size:13px;max-width:260px;line-height:1.6}
+.export-row{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
+/* Sections rendered */
+.section-block{margin-bottom:0}
+.section-header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:#f7f8fa;border:1px solid var(--border);border-radius:var(--r) var(--r) 0 0;cursor:pointer;user-select:none}
+.section-title-text{font-size:14px;font-weight:500;color:var(--text)}
+.section-actions{display:flex;gap:6px;align-items:center}
+.section-body{border:1px solid var(--border);border-top:none;border-radius:0 0 var(--r) var(--r);padding:16px;background:#ffffff;margin-bottom:8px}
+.section-body textarea{width:100%;background:transparent;border:none;color:var(--text);font-family:var(--ff);font-size:13px;line-height:1.7;resize:vertical;min-height:120px;outline:none;padding:0}
+.regen-panel{background:#fefce8;border:1px solid #d4a060;border-radius:var(--r);padding:12px;margin-top:8px;display:none}
+.regen-panel.open{display:block}
+.regen-panel textarea{width:100%;background:#f7f8fa;border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:var(--ff);font-size:12px;padding:7px 10px;resize:none;height:56px;outline:none}
+.regen-panel textarea:focus{border-color:var(--accent)}
+
+/* ── STATS ── */
+.stats-row{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:16px}
+.stat{background:#ffffff;border:1px solid var(--border);border-radius:var(--r);padding:11px 14px;box-shadow:var(--shadow)}
+.sv{font-size:20px;font-weight:500;color:var(--accent);font-family:var(--serif)}
+.sl{font-size:11px;color:var(--t3);margin-top:1px}
+
+/* ── HISTORY ── */
+.history-list{display:flex;flex-direction:column;gap:8px}
+.hist-card{background:#ffffff;border:1px solid var(--border);border-radius:var(--r);padding:12px 16px;display:flex;align-items:center;gap:12px;box-shadow:var(--shadow)}
+.hist-card:hover{border-color:var(--bhi)}
+.hist-info{flex:1;min-width:0}
+.hist-title{font-size:13px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hist-meta{font-size:11px;color:var(--t3);margin-top:2px}
+.hist-actions{display:flex;gap:6px;flex-shrink:0}
+
+/* ── GAP CARDS ── */
+.gaps-list{display:flex;flex-direction:column;gap:10px}
+.gap-card{background:#ffffff;border:1px solid var(--border);border-left:3px solid var(--amber);box-shadow:var(--shadow);border-radius:var(--r);padding:12px 14px}
+.gap-card h4{font-size:13px;font-weight:500;color:var(--amber);margin-bottom:3px}
+.gap-card p{font-size:12px;color:var(--t2);line-height:1.6}
+
+/* ── QUALITY BAR ── */
+.qbar{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:var(--r);padding:10px 16px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;font-size:13px;margin-bottom:14px}
+.qb-item{display:flex;align-items:center;gap:5px;color:var(--t2)}.qb-item strong{color:var(--teal)}
+
+/* ── INFO BOX ── */
+.ibox{background:#eff6ff;border:1px solid #bfdbfe;border-radius:var(--r);padding:9px 13px;font-size:12px;color:var(--t2);display:flex;align-items:flex-start;gap:7px;margin-bottom:14px}
+
+/* ── STREAMING BADGE ── */
+.streaming-badge{display:inline-flex;align-items:center;gap:5px;background:rgba(139,26,26,.08);border:1px solid #d1d5db;border-radius:20px;padding:3px 10px;font-size:11px;color:var(--accent)}
+.streaming-dot{width:6px;height:6px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--teal));animation:pulse 1s infinite}
+
+/* ── ANIMATIONS ── */
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}.pulsing{animation:pulse 1.5s infinite}
+@keyframes fi{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}.fi{animation:fi .3s ease}
+@keyframes spin{to{transform:rotate(360deg)}}.spinning{animation:spin 1s linear infinite}
+
+/* ── SETUP PANEL ── */
+.cmd-block{display:flex;align-items:center;justify-content:space-between;background:#1e293b;border-radius:var(--r);padding:11px 14px;cursor:pointer;transition:background .15s;gap:12px;margin-bottom:4px}
+.cmd-block:hover{background:#0f172a}
+.cmd-block code{font-family:'Fira Mono','Cascadia Code',monospace;font-size:13px;color:#7dd3fc;word-break:break-all;flex:1}
+.cmd-copy{font-size:11px;color:#94a3b8;white-space:nowrap;flex-shrink:0;transition:color .15s}
+.cmd-block:hover .cmd-copy{color:#e2e8f0}
+.cmd-block.copied{background:#14532d}
+.cmd-block.copied .cmd-copy{color:#86efac}
+.hw-card{background:#f7f8fa;border:1px solid var(--border);border-radius:var(--r);padding:14px 16px}
+.hw-card-label{font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px}
+.hw-card-val{font-size:20px;font-weight:500;color:var(--text);font-family:var(--serif)}
+.hw-card-sub{font-size:11px;color:var(--t2);margin-top:2px}
+.model-card{background:#ffffff;border:2px solid var(--border);border-radius:var(--rl);padding:16px;transition:all .2s;position:relative}
+.model-card:hover{border-color:var(--bhi);box-shadow:var(--shadow-md)}
+.model-card.selected{border-color:var(--accent);background:#eff6ff}
+.model-card.recommended{border-color:var(--teal)}
+.model-grade{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:8px;font-size:14px;font-weight:700;flex-shrink:0}
+.grade-S{background:#dcfce7;color:#15803d}
+.grade-A{background:#dbeafe;color:#1d4ed8}
+.grade-B{background:#fef9c3;color:#a16207}
+.grade-C{background:#ffedd5;color:#c2410c}
+.grade-D{background:#fee2e2;color:#b91c1c}
+.os-card:hover{border-color:var(--accent)!important;background:#eff6ff}
+.os-card.active{border-color:var(--accent)!important;background:#eff6ff}
+.spinning{animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── IBOX ── */
+.ibox{display:flex;gap:8px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:var(--r);padding:10px 14px;font-size:12px;color:var(--t2);margin-bottom:16px;line-height:1.5}
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:#f3f4f6}
+::-webkit-scrollbar-thumb{background:var(--bhi);border-radius:2px}
+
+/* ── RESPONSIVE ── */
+@media(max-width:860px){
+  .sidebar{display:none}.topbar,.content{padding-left:16px;padding-right:16px}
+  .form-grid,.source-grid,.presets{grid-template-columns:1fr}
+  .stats-row{grid-template-columns:1fr 1fr}.tabs{padding:0 16px}
+  .onboard-steps{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════
+     SETUP WIZARD — guía interactiva por OS
+══════════════════════════════════════════════ -->
+<div id="setupWizard" style="position:fixed;inset:0;z-index:3000;background:#f8fafc;overflow-y:auto;padding:32px 16px 48px">
+<div style="max-width:560px;margin:0 auto">
+
+  <!-- Logo -->
+  <div style="text-align:center;margin-bottom:28px">
+    <div style="font-size:44px;margin-bottom:8px">🦙</div>
+    <h1 style="font-family:'DM Serif Display',serif;font-size:26px;font-weight:400;color:#0f172a;margin:0 0 6px">Doctoralia Local</h1>
+    <p style="font-size:14px;color:#64748b;margin:0">IA 100% en tu ordenador · Sin costes · Sin datos en la nube</p>
+  </div>
+
+  <!-- PROGRESS BAR -->
+  <div style="display:flex;gap:0;margin-bottom:28px;border-radius:10px;overflow:hidden;border:1px solid #e2e8f0">
+    <div id="swp1" style="flex:1;padding:10px 6px;text-align:center;font-size:11px;font-weight:500;background:#eff6ff;color:#2563eb;border-right:1px solid #e2e8f0;transition:all .3s">① Sistema</div>
+    <div id="swp2" style="flex:1;padding:10px 6px;text-align:center;font-size:11px;font-weight:500;background:#f8fafc;color:#94a3b8;border-right:1px solid #e2e8f0;transition:all .3s">② Servidor web</div>
+    <div id="swp3" style="flex:1;padding:10px 6px;text-align:center;font-size:11px;font-weight:500;background:#f8fafc;color:#94a3b8;border-right:1px solid #e2e8f0;transition:all .3s">③ Ollama</div>
+    <div id="swp4" style="flex:1;padding:10px 6px;text-align:center;font-size:11px;font-weight:500;background:#f8fafc;color:#94a3b8;transition:all .3s">④ Conectar</div>
+  </div>
+
+  <!-- ─── STEP 1: OS selector ─── -->
+  <div id="sw-s1" style="background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:24px;margin-bottom:14px">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px">
+      <div id="sw-n1" style="width:28px;height:28px;border-radius:50%;background:#2563eb;color:#fff;font-size:13px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0">1</div>
+      <div>
+        <div style="font-size:15px;font-weight:500;color:#0f172a">Elige tu sistema operativo</div>
+        <div id="sw-os-detected" style="font-size:12px;color:#64748b">Detección automática…</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <button id="sw-os-mac" onclick="swSetOS('mac')" style="flex:1;min-width:120px;padding:12px 10px;border:2px solid #e2e8f0;border-radius:12px;background:#fff;font-size:13px;font-weight:500;color:#475569;cursor:pointer;transition:all .2s;font-family:inherit">🍎 macOS</button>
+      <button id="sw-os-win" onclick="swSetOS('win')" style="flex:1;min-width:120px;padding:12px 10px;border:2px solid #e2e8f0;border-radius:12px;background:#fff;font-size:13px;font-weight:500;color:#475569;cursor:pointer;transition:all .2s;font-family:inherit">🪟 Windows</button>
+      <button id="sw-os-linux" onclick="swSetOS('linux')" style="flex:1;min-width:120px;padding:12px 10px;border:2px solid #e2e8f0;border-radius:12px;background:#fff;font-size:13px;font-weight:500;color:#475569;cursor:pointer;transition:all .2s;font-family:inherit">🐧 Linux</button>
+    </div>
+  </div>
+
+  <!-- ─── STEP 2: Servidor HTTP ─── -->
+  <div id="sw-s2" style="background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:24px;margin-bottom:14px;opacity:.4;pointer-events:none;transition:opacity .3s">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:6px">
+      <div id="sw-n2" style="width:28px;height:28px;border-radius:50%;background:#e2e8f0;color:#94a3b8;font-size:13px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0">2</div>
+      <div>
+        <div style="font-size:15px;font-weight:500;color:#0f172a">Abre una terminal · Lanza el servidor web</div>
+        <div style="font-size:12px;color:#64748b">Necesario para servir el HTML correctamente (file:// tiene restricciones)</div>
+      </div>
+    </div>
+    <div id="sw-s2-body" style="margin-top:14px"></div>
+    <button onclick="swMarkStep2Done()" style="margin-top:14px;width:100%;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:11px;font-size:14px;font-weight:500;color:#15803d;cursor:pointer;font-family:inherit;transition:all .2s" id="sw-s2-btn">
+      ✅ Ya ejecuté los comandos — continuar
+    </button>
+  </div>
+
+  <!-- ─── STEP 3: Ollama ─── -->
+  <div id="sw-s3" style="background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:24px;margin-bottom:14px;opacity:.4;pointer-events:none;transition:opacity .3s">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:6px">
+      <div id="sw-n3" style="width:28px;height:28px;border-radius:50%;background:#e2e8f0;color:#94a3b8;font-size:13px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0">3</div>
+      <div>
+        <div style="font-size:15px;font-weight:500;color:#0f172a">Segunda terminal · Lanza Ollama</div>
+        <div style="font-size:12px;color:#64748b">En una terminal nueva, instala y arranca Ollama con el modelo elegido</div>
+      </div>
+    </div>
+    <div id="sw-s3-body" style="margin-top:14px"></div>
+
+    <!-- Model selector -->
+    <div style="margin-top:14px">
+      <div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:10px;padding:11px 14px;margin-bottom:12px;display:flex;align-items:center;gap:10px">
+        <div style="flex:1">
+          <div style="font-size:12px;font-weight:600;color:#0369a1;margin-bottom:2px">¿Qué modelo puedo correr en mi ordenador?</div>
+          <div style="font-size:11px;color:#0284c7">Visita <strong>canirun.ai</strong> para saber qué modelos son compatibles con tu hardware exacto</div>
+        </div>
+        <a href="https://canirun.ai" target="_blank" style="background:#2563eb;color:#fff;border-radius:8px;padding:8px 14px;font-size:12px;font-weight:600;text-decoration:none;white-space:nowrap;flex-shrink:0">Abrir canirun.ai ↗</a>
+      </div>
+      <div style="font-size:12px;color:#64748b;margin-bottom:8px;font-weight:500">Selecciona el modelo a descargar:</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap" id="sw-model-btns">
+        <button onclick="swSelectModel('llama3.2')" class="sw-mdbtn" data-m="llama3.2" style="padding:8px 14px;border:1.5px solid #2563eb;border-radius:20px;background:#eff6ff;color:#2563eb;font-size:12px;font-weight:500;cursor:pointer;font-family:inherit">🏎️ llama3.2 · 2GB</button>
+        <button onclick="swSelectModel('mistral')" class="sw-mdbtn" data-m="mistral" style="padding:8px 14px;border:1.5px solid #e2e8f0;border-radius:20px;background:#fff;color:#475569;font-size:12px;cursor:pointer;font-family:inherit">📝 mistral · 4GB</button>
+        <button onclick="swSelectModel('qwen2.5')" class="sw-mdbtn" data-m="qwen2.5" style="padding:8px 14px;border:1.5px solid #e2e8f0;border-radius:20px;background:#fff;color:#475569;font-size:12px;cursor:pointer;font-family:inherit">🌏 qwen2.5 · 5GB · ES</button>
+        <button onclick="swSelectModel('phi3.5')" class="sw-mdbtn" data-m="phi3.5" style="padding:8px 14px;border:1.5px solid #e2e8f0;border-radius:20px;background:#fff;color:#475569;font-size:12px;cursor:pointer;font-family:inherit">🔬 phi3.5 · 2GB</button>
+        <button onclick="swSelectModel('deepseek-r1')" class="sw-mdbtn" data-m="deepseek-r1" style="padding:8px 14px;border:1.5px solid #e2e8f0;border-radius:20px;background:#fff;color:#475569;font-size:12px;cursor:pointer;font-family:inherit">🧠 deepseek-r1 · 5GB</button>
+      </div>
+      <div style="margin-top:10px" id="sw-ollama-cmds"></div>
+    </div>
+
+    <button onclick="swMarkStep3Done()" style="margin-top:14px;width:100%;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:11px;font-size:14px;font-weight:500;color:#15803d;cursor:pointer;font-family:inherit" id="sw-s3-btn">
+      ✅ Ya ejecuté los comandos — continuar
+    </button>
+  </div>
+
+  <!-- ─── STEP 4: Conectar y entrar ─── -->
+  <div id="sw-s4" style="background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:24px;margin-bottom:24px;opacity:.4;pointer-events:none;transition:opacity .3s">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+      <div id="sw-n4" style="width:28px;height:28px;border-radius:50%;background:#e2e8f0;color:#94a3b8;font-size:13px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0">4</div>
+      <div>
+        <div style="font-size:15px;font-weight:500;color:#0f172a">Verificar y entrar</div>
+        <div style="font-size:12px;color:#64748b">Comprueba que Ollama responde y entra a la app</div>
+      </div>
+    </div>
+
+    <div id="sw-url-info" style="background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:11px 14px;font-size:12px;color:#92400e;margin-bottom:14px;line-height:1.6">
+      ⚠️ Si estás viendo esto como <strong>file://</strong>, el servidor HTTP del paso 2 habrá abierto esta misma página en <code style="background:#fef3c7;padding:1px 5px;border-radius:4px">http://localhost:8080/doctoralia_local.html</code> — cambia a esa URL y el paso 2 ya estará hecho.
+    </div>
+
+    <button id="sw-connect-btn" onclick="swConnect()" style="width:100%;background:#2563eb;color:#fff;border:none;border-radius:10px;padding:14px;font-size:15px;font-weight:500;cursor:pointer;font-family:inherit;transition:all .2s">
+      🔌 Conectar con Ollama →
+    </button>
+    <div id="sw-connect-result" style="display:none;margin-top:12px;font-size:13px;padding:12px 14px;border-radius:10px"></div>
+  </div>
+
+  <!-- Footer -->
+  <div style="text-align:center;font-size:12px;color:#94a3b8">
+    ¿Ya tienes Ollama corriendo?
+    <button onclick="swSkip()" style="background:none;border:none;color:#2563eb;font-size:12px;cursor:pointer;font-family:inherit;text-decoration:underline;margin-left:4px">Saltar setup →</button>
+  </div>
+
+</div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════
+     MAIN APP
+══════════════════════════════════════════════ -->
+<div class="app">
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="logo">
+    <div class="logo-row">
+      <div class="logo-icon">🔬</div>
+      <div><h1>Doctoralia Local</h1><span>Ollama · Review Generator</span></div>
+    </div>
+  </div>
+  <div class="snav">Configuración</div>
+  <div class="ni-item" onclick="showMain('setup')" id="ni-setup"><span class="ni">🦙</span> Setup Ollama <span id="setupDot" style="margin-left:auto;width:7px;height:7px;border-radius:50%;background:var(--red);display:inline-block"></span></div>
+  <div class="snav">Pipeline</div>
+  <div class="ni-item active" onclick="showMain('wizard')"><span class="ni">✨</span> Nueva revisión</div>
+  <div class="ni-item" onclick="showMain('output')"><span class="ni">📄</span> Artículo generado</div>
+  <div class="ni-item" onclick="showMain('gaps')"><span class="ni">🔍</span> Gaps detectados</div>
+  <div class="ni-item" onclick="showMain('history')"><span class="ni">🕓</span> Historial</div>
+  <div class="snav">Avanzado</div>
+  <div class="ni-item" onclick="showMain('agents')"><span class="ni">🤖</span> Agentes &amp; Tokens</div>
+  <div class="ni-item" onclick="showMain('sources')"><span class="ni">📚</span> Fuentes &amp; Límites</div>
+  <div class="snav">Recursos</div>
+  <div class="ni-item" onclick="window.open('https://ollama.com/library','_blank')"><span class="ni">📦</span> Biblioteca Ollama</div>
+  <div class="ni-item" onclick="openOnboard()"><span class="ni">❓</span> Tutorial</div>
+  <div class="sidebar-footer">
+    <div class="user-row">
+      <div class="avatar" id="avI" style="font-size:16px">🦙</div>
+      <div><div class="un" id="avL">Sin conectar</div><div class="up" id="avSub">localhost:11434</div></div>
+    </div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div>
+      <h2 id="topbarTitle">Nueva revisión</h2>
+      <p id="topbarSub">Configura tu tema y genera un artículo científico completo</p>
+    </div>
+    <div class="topbar-actions">
+      <button class="btn" onclick="showMain('history')" title="Historial">🕓 Historial</button>
+      <button class="btn btn-stop" id="btnStop" onclick="stopGeneration()" disabled title="Detener generación">⏹ Parar</button>
+      <button class="btn btn-primary" id="btnGen" onclick="startGeneration()">▶ Generar</button>
+    </div>
+  </div>
+
+  <!-- TABS (navigation) -->
+  <div class="tabs" id="mainTabs">
+    <div class="tab" id="tab-setup" onclick="showMain('setup')">🦙 Setup <span id="setupTabDot" class="tab-badge" style="background:var(--red)"></span></div>
+    <div class="tab active" id="tab-wizard"   onclick="showMain('wizard')">✨ Nueva revisión</div>
+    <div class="tab"        id="tab-output"   onclick="showMain('output')">📄 Artículo <span id="outputBadge" class="tab-badge" style="display:none"></span></div>
+    <div class="tab"        id="tab-gaps"     onclick="showMain('gaps')">🔍 Gaps</div>
+    <div class="tab"        id="tab-history"  onclick="showMain('history')">🕓 Historial</div>
+    <div class="tab"        id="tab-agents"   onclick="showMain('agents')">🤖 Agentes</div>
+    <div class="tab"        id="tab-sources"  onclick="showMain('sources')">📚 Fuentes</div>
+  </div>
+
+  <!-- ══════ PANEL: WIZARD ══════ -->
+  <div class="tc active content" id="tc-wizard">
+
+    <!-- OLLAMA SETUP PANEL -->
+    <div class="apikey-panel" id="ollamaPanel">
+      <div class="apikey-header">
+        <span style="font-size:17px">🦙</span>
+        <h3>Ollama — Modelo local</h3>
+        <span id="ollamaStatusBadge" style="margin-left:auto;font-size:11px;background:rgba(220,38,38,.12);color:var(--red);padding:3px 9px;border-radius:20px;border:1px solid rgba(220,38,38,.3)">⚫ Sin conectar</span>
+      </div>
+
+      <!-- Fila host + botón test -->
+      <div style="display:flex;gap:8px;align-items:flex-end;margin-bottom:10px">
+        <div class="field" style="flex:1">
+          <label>Host Ollama</label>
+          <input type="text" id="ollamaHost" value="http://localhost:11434" placeholder="http://localhost:11434">
+        </div>
+        <button class="btn" id="btnTestConn" onclick="testOllamaConnection()" title="Probar conexión con Ollama">🔌 Probar conexión</button>
+      </div>
+
+      <!-- Selector de modelo instalado -->
+      <div style="display:flex;gap:8px;align-items:flex-end;margin-bottom:10px">
+        <div class="field" style="flex:1">
+          <label>Modelo activo <span class="req">*</span></label>
+          <select id="model" onchange="onModelChange()">
+            <option value="">— Primero prueba la conexión —</option>
+          </select>
+        </div>
+        <button class="btn" onclick="refreshModelList()" title="Recargar lista de modelos instalados">🔄</button>
+      </div>
+
+      <!-- Aviso modelo personalizado -->
+      <div style="margin-bottom:10px">
+        <input type="text" id="modelManual" placeholder="O escribe el nombre exacto del modelo: llama3.2, mistral, etc." style="font-size:12px;padding:6px 10px">
+        <div class="hint">Si el modelo no aparece en la lista, escríbelo manualmente aquí.</div>
+      </div>
+
+      <!-- Panel detector de hardware (canirun.ai) -->
+      <div style="border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:10px">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:#f7f8fa;border-bottom:1px solid var(--border);cursor:pointer" onclick="toggleHardwarePanel()">
+          <span style="font-size:12px;font-weight:500;color:var(--text)">🖥️ Detector de hardware — ¿qué modelos puedo correr?</span>
+          <span id="hwPanelArrow" style="font-size:11px;color:var(--t3)">▼ Abrir</span>
+        </div>
+        <div id="hardwarePanel" style="display:none;padding:14px">
+          <!-- RAM / VRAM inputs -->
+          <div class="form-grid" style="margin-bottom:12px">
+            <div class="field">
+              <label>RAM total (GB)</label>
+              <input type="number" id="hwRam" value="16" min="4" max="512" step="4">
+            </div>
+            <div class="field">
+              <label>VRAM GPU (GB) <span style="font-weight:400;color:var(--t3)">(0 si no tienes GPU)</span></label>
+              <input type="number" id="hwVram" value="0" min="0" max="128" step="2">
+            </div>
+          </div>
+          <button class="btn btn-primary" style="width:100%;margin-bottom:12px" onclick="detectCompatibleModels()">🔍 Ver modelos compatibles con mi hardware</button>
+          <div id="hwResults"></div>
+        </div>
+      </div>
+
+      <!-- Nota privacidad -->
+      <div class="privacy-note">🔒 Todo corre en tu ordenador. Ningún dato sale a internet. Coste: $0/revisión.</div>
+    </div>
+
+    <!-- WIZARD STEPS -->
+    <div class="wizard-steps">
+      <div class="wstep active" id="ws1" onclick="goWizard(1)"><div class="wstep-num">1</div>Tema</div>
+      <div class="wstep" id="ws2" onclick="goWizard(2)"><div class="wstep-num">2</div>Fuentes</div>
+      <div class="wstep" id="ws3" onclick="goWizard(3)"><div class="wstep-num">3</div>Opciones</div>
+      <div class="wstep" id="ws4" onclick="goWizard(4)"><div class="wstep-num">4</div>Generar</div>
+    </div>
+
+    <!-- STEP 1: TOPIC + PRESET -->
+    <div class="wizard-panel active" id="wp1">
+      <div class="sh">⚡ Elige un modo de generación</div>
+      <div class="presets">
+        <div class="preset-card" id="preset-fast" onclick="applyPreset('fast')">
+          <div class="preset-icon">⚡</div>
+          <div class="preset-name">Borrador rápido</div>
+          <div class="preset-desc">Solo las 3 primeras fases. Ideal para explorar un tema.</div>
+          <div class="preset-tags"><span class="ptag">~5 min</span><span class="ptag">4.000 palabras</span><span class="ptag">3 fuentes</span></div>
+        </div>
+        <div class="preset-card selected" id="preset-std" onclick="applyPreset('std')">
+          <div class="preset-icon">📝</div>
+          <div class="preset-name">Revisión estándar</div>
+          <div class="preset-desc">Pipeline completo. Balance perfecto entre calidad y tiempo.</div>
+          <div class="preset-tags"><span class="ptag">~15 min</span><span class="ptag">8.000 palabras</span><span class="ptag">6 fuentes</span></div>
+        </div>
+        <div class="preset-card" id="preset-deep" onclick="applyPreset('deep')">
+          <div class="preset-icon">🔬</div>
+          <div class="preset-name">Revisión exhaustiva</div>
+          <div class="preset-desc">Máxima cobertura. Todas las fuentes y validación completa.</div>
+          <div class="preset-tags"><span class="ptag">~30 min</span><span class="ptag">12.000 palabras</span><span class="ptag">6 fuentes</span></div>
+        </div>
+      </div>
+
+      <div class="sh">🔬 Tu tema de investigación</div>
+      <div class="form-grid">
+        <div class="field form-full">
+          <label>Tema de la revisión <span class="req">*</span></label>
+          <input type="text" id="topic" placeholder="Ej: Tactical Physiological Triage System, AI in clinical diagnosis, CRISPR gene editing..." style="font-size:15px;padding:11px 14px">
+        </div>
+        <div class="field">
+          <label>Idioma de salida</label>
+          <select id="lang">
+            <option value="Spanish">Español</option>
+            <option value="English">English</option>
+            <option value="Portuguese">Português</option>
+            <option value="French">Français</option>
+            <option value="German">Deutsch</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Estilo de citas</label>
+          <select id="citeStyle">
+            <option value="IEEE">IEEE</option>
+            <option value="APA">APA 7</option>
+            <option value="Vancouver">Vancouver</option>
+            <option value="ACM">ACM</option>
+            <option value="Chicago">Chicago</option>
+          </select>
+        </div>
+        <div class="field form-full">
+          <label>Palabras clave adicionales <span style="font-weight:400;color:var(--t3)">(opcional)</span></label>
+          <input type="text" id="keywords" placeholder="Ej: deep learning, RCT, clinical, AI...">
+        </div>
+      </div>
+      <div class="wizard-nav">
+        <span class="hint">Paso 1 de 3</span>
+        <button class="btn btn-primary" onclick="goWizard(2)">Siguiente: Fuentes →</button>
+      </div>
+    </div>
+
+    <!-- STEP 2: SOURCES -->
+    <div class="wizard-panel" id="wp2">
+      <div class="sh">📡 Fuentes académicas</div>
+      <div class="source-grid" style="margin-bottom:16px">
+        <div class="sc on" id="sc-ss"><div class="sc-head" onclick="toggleSrc('ss')"><input type="checkbox" id="chk-ss" checked><span class="sc-ico">🔭</span><div><div class="sc-name">Semantic Scholar</div><div class="sc-sub">220M papers · citaciones · abstracts</div></div></div><div class="sc-field"><label>Artículos máx.</label><input type="number" id="lim-ss" value="30" min="5" max="200" style="width:100%;margin-top:3px;padding:5px 9px;font-size:12px"></div></div>
+        <div class="sc on" id="sc-pm"><div class="sc-head" onclick="toggleSrc('pm')"><input type="checkbox" id="chk-pm" checked><span class="sc-ico">🧬</span><div><div class="sc-name">PubMed / MEDLINE</div><div class="sc-sub">37M biomédicos · abstracts XML</div></div></div><div class="sc-field"><label>Artículos máx.</label><input type="number" id="lim-pm" value="20" min="5" max="100" style="width:100%;margin-top:3px;padding:5px 9px;font-size:12px"></div></div>
+        <div class="sc on" id="sc-ax"><div class="sc-head" onclick="toggleSrc('ax')"><input type="checkbox" id="chk-ax" checked><span class="sc-ico">📐</span><div><div class="sc-name">arXiv</div><div class="sc-sub">Preprints cs, physics, math, bio</div></div></div><div class="sc-field"><label>Artículos máx.</label><input type="number" id="lim-ax" value="20" min="5" max="100" style="width:100%;margin-top:3px;padding:5px 9px;font-size:12px"></div></div>
+        <div class="sc on" id="sc-oa"><div class="sc-head" onclick="toggleSrc('oa')"><input type="checkbox" id="chk-oa" checked><span class="sc-ico">🌐</span><div><div class="sc-name">OpenAlex</div><div class="sc-sub">250M papers · sin API key · OA info</div></div></div><div class="sc-field"><label>Artículos máx.</label><input type="number" id="lim-oa" value="20" min="5" max="100" style="width:100%;margin-top:3px;padding:5px 9px;font-size:12px"></div></div>
+        <div class="sc on" id="sc-ep"><div class="sc-head" onclick="toggleSrc('ep')"><input type="checkbox" id="chk-ep" checked><span class="sc-ico">🇪🇺</span><div><div class="sc-name">Europe PMC</div><div class="sc-sub">40M+ biomédicos · full-text OA</div></div></div><div class="sc-field"><label>Artículos máx.</label><input type="number" id="lim-ep" value="20" min="5" max="100" style="width:100%;margin-top:3px;padding:5px 9px;font-size:12px"></div></div>
+        <div class="sc" id="sc-cr"><div class="sc-head" onclick="toggleSrc('cr')"><input type="checkbox" id="chk-cr"><span class="sc-ico">🔗</span><div><div class="sc-name">CrossRef</div><div class="sc-sub">165M registros · metadatos DOI</div></div></div><div class="sc-field"><label>Artículos máx.</label><input type="number" id="lim-cr" value="20" min="5" max="100" style="width:100%;margin-top:3px;padding:5px 9px;font-size:12px"></div></div>
+      </div>
+      <div class="wizard-nav">
+        <button class="btn" onclick="goWizard(1)">← Atrás</button>
+        <button class="btn btn-primary" onclick="goWizard(3)">Siguiente: Opciones →</button>
+      </div>
+    </div>
+
+    <!-- STEP 3: OPTIONS -->
+    <div class="wizard-panel" id="wp3">
+      <div class="sh">🎛️ Opciones de generación</div>
+      <div class="form-grid" style="margin-bottom:16px">
+        <div class="field">
+          <label>Extensión objetivo
+            <div class="tooltip-wrap"><span class="tip-icon">?</span><div class="tip-box">Número de palabras que el agente Crafter intentará generar en total. Valores más altos = más coste y tiempo, pero mayor profundidad.</div></div>
+          </label>
+          <div class="slider-row">
+            <input type="range" id="wc" min="2000" max="15000" step="500" value="8000" oninput="document.getElementById('wcv').textContent=parseInt(this.value).toLocaleString()+' palabras';updateEstimate()">
+            <span class="slider-val" id="wcv">8,000 palabras</span>
+          </div>
+        </div>
+        <div class="field">
+          <label>Cobertura temporal
+            <div class="tooltip-wrap"><span class="tip-icon">?</span><div class="tip-box">Rango de años que se menciona en las instrucciones al redactor. No filtra las APIs directamente, pero orienta el enfoque temporal del artículo.</div></div>
+          </label>
+          <div class="slider-row">
+            <input type="range" id="years" min="3" max="25" step="1" value="10" oninput="document.getElementById('yearsv').textContent='Últimos '+this.value+' años'">
+            <span class="slider-val" id="yearsv">Últimos 10 años</span>
+          </div>
+        </div>
+        <div class="field">
+          <label>Modelo Ollama activo
+            <div class="tooltip-wrap"><span class="tip-icon">?</span><div class="tip-box">El modelo se configura en el panel superior. Modelos recomendados: llama3.2 (8B, rápido), mistral (7B), qwen2.5 (7B). Más grande = más calidad pero más lento.</div></div>
+          </label>
+          <div style="background:#f7f8fa;border:1px solid var(--border);border-radius:var(--r);padding:8px 11px;font-size:13px;color:var(--text)" id="modelDisplayStep3">— configura en el panel superior —</div>
+        </div>
+        <div class="field">
+          <label>Instrucciones especiales
+            <div class="tooltip-wrap"><span class="tip-icon">?</span><div class="tip-box">Se inyectan en el prompt de cada agente escritor. Puedes pedir: "solo estudios RCT", "enfoque clínico", "excluir revisiones narrativas"...</div></div>
+          </label>
+          <input type="text" id="instructions" placeholder="Ej: Solo estudios RCT post-2018, enfoque clínico...">
+        </div>
+      </div>
+
+      <!-- TOGGLES -->
+      <div class="sh">🤖 Agentes adicionales</div>
+      <div>
+        <div class="toggle-row"><div><div class="tl">🔍 Detección de gaps (gap_detector)</div><div class="ts">Identifica brechas en la literatura según las preguntas del scout</div></div><div class="tsw on" id="tog-gaps" onclick="this.classList.toggle('on');updateEstimate()"></div></div>
+        <div class="toggle-row"><div><div class="tl">📈 Análisis bibliométrico (data_analyst)</div><div class="ts">Tendencias por año, venues top, temas emergentes</div></div><div class="tsw on" id="tog-biblio" onclick="this.classList.toggle('on');updateEstimate()"></div></div>
+        <div class="toggle-row"><div><div class="tl">📐 Coherencia entre secciones (thread)</div><div class="ts">Revisa transiciones entre secciones consecutivas</div></div><div class="tsw on" id="tog-thread" onclick="this.classList.toggle('on');updateEstimate()"></div></div>
+        <div class="toggle-row"><div><div class="tl">🎯 Abstract + keywords + highlights (enhancer)</div><div class="ts">Genera abstract 250w, keywords y 5 highlights en fase 5</div></div><div class="tsw on" id="tog-enhancer" onclick="this.classList.toggle('on');updateEstimate()"></div></div>
+        <div class="toggle-row"><div><div class="tl">📝 Sección PRISMA (methodology)</div><div class="ts">Metodología de revisión sistemática</div></div><div class="tsw on" id="tog-prisma" onclick="this.classList.toggle('on');updateEstimate()"></div></div>
+        <div class="toggle-row"><div><div class="tl">📊 Síntesis ejecutiva (results_synthesizer)</div><div class="ts">Resumen de 5-7 bullets para no especialistas</div></div><div class="tsw on" id="tog-synth" onclick="this.classList.toggle('on');updateEstimate()"></div></div>
+        <div class="toggle-row"><div><div class="tl">⚡ Modo rápido (salta fases 4-5)</div><div class="ts">Sin validación ni polish — más rápido, menor calidad</div></div><div class="tsw" id="tog-fast" onclick="this.classList.toggle('on');updateEstimate()"></div></div>
+      </div>
+      <div class="wizard-nav">
+        <button class="btn" onclick="goWizard(2)">← Atrás</button>
+        <button class="btn btn-primary" onclick="goWizard(4)">Ver resumen →</button>
+      </div>
+    </div>
+
+    <!-- STEP 4: SUMMARY + LAUNCH -->
+    <div class="wizard-panel" id="wp4">
+      <div class="sh">💰 Estimación antes de generar</div>
+      <div class="cost-box" id="costBox" style="background:#f0fdf4;border-color:#bbf7d0">
+        <div class="cost-item"><div class="cost-val" id="estTime">~15 min</div><div class="cost-lbl">Tiempo estimado</div></div>
+        <div class="cost-sep"></div>
+        <div class="cost-item"><div class="cost-val" style="color:var(--teal)">$0.00</div><div class="cost-lbl">Coste (local 🆓)</div></div>
+        <div class="cost-sep"></div>
+        <div class="cost-item"><div class="cost-val" id="estWords">8.000</div><div class="cost-lbl">Palabras objetivo</div></div>
+        <div class="cost-sep"></div>
+        <div class="cost-item"><div class="cost-val" id="estSources">6</div><div class="cost-lbl">Fuentes activas</div></div>
+        <div class="cost-warn">🦙 Modelo: <span id="estModel">—</span>. Los modelos locales son más lentos que la API de OpenAI. Paciencia — sin costes.</div>
+      </div>
+
+      <!-- PIPELINE STATUS -->
+      <div class="sh">🚦 Estado del pipeline</div>
+      <div class="phases">
+        <div class="ph" id="ph1"><div class="pnum">1</div>Research</div>
+        <div class="ph" id="ph2"><div class="pnum">2</div>Structure</div>
+        <div class="ph" id="ph3"><div class="pnum">3</div>Writing</div>
+        <div class="ph" id="ph4"><div class="pnum">4</div>Validation</div>
+        <div class="ph" id="ph5"><div class="pnum">5</div>Polish</div>
+      </div>
+
+      <!-- HUMAN PROGRESS -->
+      <div class="human-progress" id="humanProgress">
+        <div id="hpSteps"></div>
+        <div class="prog-bar-wrap"><div class="prog-fill" id="progFill"></div></div>
+      </div>
+
+      <!-- LOG (collapsible) -->
+      <div class="log-wrap">
+        <div class="log-toggle" onclick="toggleLog()">▶ Ver log técnico <span id="logCount" style="color:var(--accent)"></span></div>
+        <div class="log" id="logPanel"><div class="ll info">Doctoralia listo.</div></div>
+      </div>
+
+      <div class="wizard-nav" style="margin-top:16px">
+        <button class="btn" onclick="goWizard(3)">← Editar opciones</button>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-stop" id="btnStopWizard" onclick="stopGeneration()" disabled title="Detener generación">⏹ Parar</button>
+          <button class="btn btn-primary" id="btnGenWizard" onclick="startGeneration()" style="padding:10px 28px;font-size:14px">▶ Generar revisión</button>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /wizard -->
+
+  <!-- ══════ PANEL: OUTPUT ══════ -->
+  <div class="tc content" id="tc-output">
+    <div class="stats-row" id="statsRow" style="display:none">
+      <div class="stat"><div class="sv" id="sPapers">—</div><div class="sl">Papers</div></div>
+      <div class="stat"><div class="sv" id="sWords">—</div><div class="sl">Palabras</div></div>
+      <div class="stat"><div class="sv" id="sSecs">—</div><div class="sl">Secciones</div></div>
+      <div class="stat"><div class="sv" id="sTime">—</div><div class="sl">Tiempo</div></div>
+      <div class="stat"><div class="sv" id="sScore">—</div><div class="sl">Quality</div></div>
+    </div>
+    <div class="qbar fi" id="qualityBar" style="display:none">
+      <div class="qb-item">✅ Score: <strong id="qbScore">—</strong></div>
+      <div class="qb-item">📚 <strong id="qbPapers">—</strong> papers</div>
+      <div class="qb-item">📝 <strong id="qbSecs">—</strong> secciones</div>
+      <div class="qb-item">⏱ <strong id="qbTime">—</strong></div>
+      <div class="qb-item" id="partialBadge" style="display:none">⚠️ <strong style="color:var(--amber)">Borrador parcial guardado</strong></div>
+    </div>
+    <div id="outputArea">
+      <div class="placeholder"><div class="bi">📋</div><p>El artículo generado aparecerá aquí.<br>Pulsa <strong>Generar revisión</strong> para empezar.</p></div>
+    </div>
+    <div class="export-row" id="exportRow" style="display:none">
+      <button class="btn btn-success" onclick="exportMarkdown()">⬇ Markdown (.md)</button>
+      <button class="btn btn-primary" onclick="exportWord()">⬇ Word (.doc)</button>
+      <button class="btn btn-amber"   onclick="exportLatex()">⬇ LaTeX (.tex)</button>
+      <button class="btn"             onclick="exportTxt()">⬇ Texto (.txt)</button>
+      <button class="btn"             onclick="copyClipboard()">📋 Copiar todo</button>
+    </div>
+  </div>
+
+  <!-- ══════ PANEL: GAPS ══════ -->
+  <div class="tc content" id="tc-gaps">
+    <div id="gapsArea">
+      <div class="placeholder"><div class="bi">🔍</div><p>Los gaps detectados por el agente <strong>gap_detector</strong> aparecerán aquí.</p></div>
+    </div>
+  </div>
+
+  <!-- ══════ PANEL: HISTORY ══════ -->
+  <div class="tc content" id="tc-history">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <div><div style="font-size:15px;font-weight:500">Historial de revisiones</div><div style="font-size:12px;color:var(--t3);margin-top:2px">Guardadas localmente en tu navegador · máx. 5</div></div>
+      <button class="btn btn-danger" onclick="clearHistory()" style="font-size:12px">🗑 Borrar historial</button>
+    </div>
+    <div id="historyList"><div class="placeholder"><div class="bi">🕓</div><p>Aún no hay revisiones guardadas.</p></div></div>
+  </div>
+
+  <!-- ══════ PANEL: AGENTS ══════ -->
+  <div class="tc content" id="tc-agents">
+    <div class="ibox"><span>ℹ️</span><span>Configura el máximo de tokens por agente. Más tokens = respuestas más largas, mayor coste. Valores del notebook original como referencia.</span></div>
+    <div class="sh">🤖 Todos los agentes del pipeline <button onclick="resetAgentDefaults()">↺ Restaurar defaults</button></div>
+    <div class="at-wrap"><table class="at"><thead><tr><th style="width:150px">Agente</th><th style="width:110px">Fase</th><th>Rol</th><th style="width:90px">Max tokens</th></tr></thead><tbody id="agentTbody"></tbody></table></div>
+    <div class="divider"></div>
+    <div class="sh">🌡️ Parámetros globales</div>
+    <div class="form-grid" style="max-width:520px">
+      <div class="field">
+        <label>Temperatura
+          <div class="tooltip-wrap"><span class="tip-icon">?</span><div class="tip-box">0 = determinista y preciso (mejor para hechos). 1 = creativo y variable. El notebook usa 0.7 para escritura académica.</div></div>
+        </label>
+        <div class="slider-row">
+          <input type="range" id="temperature" min="0" max="1" step="0.05" value="0.7" oninput="document.getElementById('tempv').textContent=parseFloat(this.value).toFixed(2)">
+          <span class="slider-val" id="tempv">0.70</span>
+        </div>
+      </div>
+      <div class="field">
+        <label>Reintentos por agente
+          <div class="tooltip-wrap"><span class="tip-icon">?</span><div class="tip-box">Si una llamada a OpenAI falla (rate limit, timeout), se reintenta con backoff exponencial: 1s → 2s → 4s.</div></div>
+        </label>
+        <input type="number" id="maxRetries" value="3" min="1" max="5">
+      </div>
+      <div class="field">
+        <label>Queries paralelas (scout)
+          <div class="tooltip-wrap"><span class="tip-icon">?</span><div class="tip-box">El scout genera N queries de búsqueda distintas. Más queries = mayor cobertura pero más tiempo y coste.</div></div>
+        </label>
+        <input type="number" id="maxQueries" value="4" min="1" max="6">
+      </div>
+      <div class="field">
+        <label>Top papers al contexto
+          <div class="tooltip-wrap"><span class="tip-icon">?</span><div class="tip-box">De todos los papers encontrados, cuántos se incluyen en el contexto del redactor. Más = mejor cobertura, más tokens.</div></div>
+        </label>
+        <input type="number" id="topPapers" value="25" min="10" max="60">
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════ PANEL: SOURCES ══════ -->
+  <div class="tc content" id="tc-sources">
+    <div class="ibox"><span>ℹ️</span><span>Configura límites detallados de cada fuente y opciones de deduplicación. Los cambios se sincronizan con el wizard.</span></div>
+    <div class="sh">📡 Fuentes académicas — configuración avanzada</div>
+    <div class="source-grid" style="margin-bottom:16px">
+      <div class="sc on" id="sc2-ss"><div class="sc-head" onclick="syncSrc('ss')"><input type="checkbox" id="chk2-ss" checked><span class="sc-ico">🔭</span><div><div class="sc-name">Semantic Scholar</div><div class="sc-sub">220M · citaciones reales · abstracts</div></div></div><div class="sc-field"><label>Máx. por query</label><input type="number" id="lim2-ss" value="30" min="5" max="200" style="width:100%;margin-top:3px;padding:5px 9px;font-size:12px" oninput="syncLim('ss',this.value)"></div><div class="hint" style="margin-top:5px">API pública · key interna · incluye IEEE, ACM</div></div>
+      <div class="sc on" id="sc2-pm"><div class="sc-head" onclick="syncSrc('pm')"><input type="checkbox" id="chk2-pm" checked><span class="sc-ico">🧬</span><div><div class="sc-name">PubMed / MEDLINE</div><div class="sc-sub">37M biomédicos · filtro English</div></div></div><div class="sc-field"><label>Máx. por query</label><input type="number" id="lim2-pm" value="20" min="5" max="100" style="width:100%;margin-top:3px;padding:5px 9px;font-size:12px" oninput="syncLim('pm',this.value)"></div><div class="hint" style="margin-top:5px">NCBI eUtils · XML con abstracts completos</div></div>
+      <div class="sc on" id="sc2-ax"><div class="sc-head" onclick="syncSrc('ax')"><input type="checkbox" id="chk2-ax" checked><span class="sc-ico">📐</span><div><div class="sc-name">arXiv</div><div class="sc-sub">Preprints cs, physics, math, bio</div></div></div><div class="sc-field"><label>Máx. por query</label><input type="number" id="lim2-ax" value="20" min="5" max="100" style="width:100%;margin-top:3px;padding:5px 9px;font-size:12px" oninput="syncLim('ax',this.value)"></div><div class="hint" style="margin-top:5px">Atom API pública · preprints más recientes</div></div>
+      <div class="sc on" id="sc2-oa"><div class="sc-head" onclick="syncSrc('oa')"><input type="checkbox" id="chk2-oa" checked><span class="sc-ico">🌐</span><div><div class="sc-name">OpenAlex</div><div class="sc-sub">250M papers · sin key · 100K/día</div></div></div><div class="sc-field"><label>Máx. por query</label><input type="number" id="lim2-oa" value="20" min="5" max="100" style="width:100%;margin-top:3px;padding:5px 9px;font-size:12px" oninput="syncLim('oa',this.value)"></div><div class="hint" style="margin-top:5px">Sucesor Microsoft Academic Graph · OA status · DOAJ</div></div>
+      <div class="sc on" id="sc2-ep"><div class="sc-head" onclick="syncSrc('ep')"><input type="checkbox" id="chk2-ep" checked><span class="sc-ico">🇪🇺</span><div><div class="sc-name">Europe PMC</div><div class="sc-sub">40M+ biomédicos · full-text OA</div></div></div><div class="sc-field"><label>Máx. por query</label><input type="number" id="lim2-ep" value="20" min="5" max="100" style="width:100%;margin-top:3px;padding:5px 9px;font-size:12px" oninput="syncLim('ep',this.value)"></div><div class="hint" style="margin-top:5px">EBI · ensayos clínicos · patentes · literatura gris</div></div>
+      <div class="sc" id="sc2-cr"><div class="sc-head" onclick="syncSrc('cr')"><input type="checkbox" id="chk2-cr"><span class="sc-ico">🔗</span><div><div class="sc-name">CrossRef</div><div class="sc-sub">165M registros · metadatos DOI</div></div></div><div class="sc-field"><label>Máx. por query</label><input type="number" id="lim2-cr" value="20" min="5" max="100" style="width:100%;margin-top:3px;padding:5px 9px;font-size:12px" oninput="syncLim('cr',this.value)"></div><div class="hint" style="margin-top:5px">Metadatos publisher · DOI canonical · funding</div></div>
+    </div>
+    <div class="sh">⚙️ Opciones avanzadas de búsqueda</div>
+    <div class="form-grid">
+      <div class="field"><label>Email cortesía NCBI / OpenAlex<div class="tooltip-wrap"><span class="tip-icon">?</span><div class="tip-box">Requerido por cortesía en NCBI eUtils y OpenAlex. Accede al "polite pool" con mejores límites. No se almacena en ningún servidor.</div></div></label><input type="email" id="pubmedEmail" value="doctoralia@app.io" placeholder="tu@email.com"></div>
+      <div class="field"><label>Ordenar papers por</label><select id="sortPapers"><option value="citations">Citas (descendente)</option><option value="year">Año (descendente)</option><option value="source">Fuente</option></select></div>
+    </div>
+  </div>
+
+  <!-- ══════ PANEL: SETUP OLLAMA ══════ -->
+  <div class="tc content" id="tc-setup" style="max-width:860px">
+
+    <!-- ── PASO 1: DETECTOR DE HARDWARE ── -->
+    <div class="sh" style="margin-top:0">🖥️ Paso 1 — Detectar tu hardware</div>
+    <div id="hwDetectBox" style="background:#ffffff;border:1px solid var(--border);border-radius:var(--rl);padding:20px;margin-bottom:20px">
+
+      <!-- Estado auto-detect -->
+      <div id="hwAutoRow" style="display:flex;align-items:center;gap:14px;margin-bottom:16px">
+        <div id="hwSpinner" style="width:32px;height:32px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;display:none"></div>
+        <div id="hwStatusIcon" style="font-size:28px">🖥️</div>
+        <div style="flex:1">
+          <div style="font-size:14px;font-weight:500;color:var(--text)" id="hwStatusTitle">Listo para detectar tu hardware</div>
+          <div style="font-size:12px;color:var(--t2);margin-top:2px" id="hwStatusSub">Usamos WebGPU y las APIs del navegador — nada sale de tu ordenador</div>
+        </div>
+        <button class="btn btn-primary" id="btnDetectHW" onclick="detectHardware()">🔍 Detectar ahora</button>
+      </div>
+
+      <!-- Resultado hardware detectado -->
+      <div id="hwResult" style="display:none">
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px" id="hwCards"></div>
+        <div style="font-size:11px;color:var(--t3);padding:8px 0;border-top:1px solid var(--border)">⚠️ Estimaciones basadas en APIs del navegador. Los valores reales pueden variar ligeramente.</div>
+      </div>
+
+      <!-- Fallback manual -->
+      <div id="hwManualToggle" style="margin-top:8px">
+        <div style="font-size:12px;color:var(--accent);cursor:pointer;display:inline-flex;align-items:center;gap:5px" onclick="toggleManualHW()">
+          <span id="manualArrow">▶</span> Introducir specs manualmente
+        </div>
+        <div id="hwManualForm" style="display:none;margin-top:12px">
+          <div class="form-grid" style="max-width:500px">
+            <div class="field">
+              <label>RAM total del sistema (GB)</label>
+              <select id="manualRam">
+                <option value="4">4 GB</option><option value="8">8 GB</option>
+                <option value="16" selected>16 GB</option><option value="24">24 GB</option>
+                <option value="32">32 GB</option><option value="48">48 GB</option>
+                <option value="64">64 GB</option><option value="96">96 GB</option>
+                <option value="128">128 GB</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>VRAM GPU dedicada (GB)</label>
+              <select id="manualVram">
+                <option value="0" selected>Sin GPU dedicada</option>
+                <option value="4">4 GB (GTX 1650, etc.)</option>
+                <option value="6">6 GB (RTX 2060, etc.)</option>
+                <option value="8">8 GB (RTX 3070, etc.)</option>
+                <option value="10">10 GB (RTX 3080 10GB)</option>
+                <option value="12">12 GB (RTX 3080 12GB / 4070)</option>
+                <option value="16">16 GB (RTX 3090 Ti, etc.)</option>
+                <option value="24">24 GB (RTX 3090 / 4090)</option>
+                <option value="48">48 GB (A6000 / etc.)</option>
+                <option value="80">80 GB (A100)</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Tipo de sistema</label>
+              <select id="manualPlatform">
+                <option value="generic">PC / Linux (RAM + VRAM separadas)</option>
+                <option value="apple">Apple Silicon (memoria unificada)</option>
+                <option value="laptop">Portátil (RAM compartida con GPU)</option>
+              </select>
+            </div>
+            <div class="field" style="display:flex;align-items:flex-end">
+              <button class="btn btn-primary" style="width:100%" onclick="applyManualHW()">✅ Aplicar specs manuales</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── PASO 2: MODELOS COMPATIBLES ── -->
+    <div class="sh">🤖 Paso 2 — Modelos compatibles con tu hardware</div>
+    <div id="modelsBox" style="margin-bottom:20px">
+      <div id="modelsPlaceholder" style="background:#f7f8fa;border:1px solid var(--border);border-radius:var(--r);padding:28px;text-align:center;color:var(--t3);font-size:13px">
+        Detecta tu hardware primero para ver qué modelos puedes ejecutar
+      </div>
+      <div id="modelsList" style="display:none"></div>
+    </div>
+
+    <!-- ── PASO 3: INSTALAR OLLAMA ── -->
+    <div class="sh">⚙️ Paso 3 — Instalar Ollama</div>
+    <div style="background:#ffffff;border:1px solid var(--border);border-radius:var(--rl);padding:20px;margin-bottom:20px">
+      <div style="font-size:13px;color:var(--t2);margin-bottom:14px">Ollama es el servidor local que gestiona y ejecuta los modelos. Se instala en un minuto.</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px">
+        <div onclick="selectOS('mac')" id="osMac" class="os-card" style="border:2px solid var(--border);border-radius:var(--r);padding:14px;text-align:center;cursor:pointer;transition:all .15s">
+          <div style="font-size:28px;margin-bottom:6px"></div>
+          <div style="font-size:13px;font-weight:500">macOS</div>
+        </div>
+        <div onclick="selectOS('win')" id="osWin" class="os-card" style="border:2px solid var(--border);border-radius:var(--r);padding:14px;text-align:center;cursor:pointer;transition:all .15s">
+          <div style="font-size:28px;margin-bottom:6px">🪟</div>
+          <div style="font-size:13px;font-weight:500">Windows</div>
+        </div>
+        <div onclick="selectOS('linux')" id="osLinux" class="os-card" style="border:2px solid var(--border);border-radius:var(--r);padding:14px;text-align:center;cursor:pointer;transition:all .15s">
+          <div style="font-size:28px;margin-bottom:6px">🐧</div>
+          <div style="font-size:13px;font-weight:500">Linux</div>
+        </div>
+      </div>
+      <div id="installInstructions">
+        <div id="installMac" style="display:none">
+          <div class="sh" style="margin-top:0;margin-bottom:8px">Opción A — Descarga directa (recomendado)</div>
+          <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px">
+            <a href="https://ollama.com/download/Ollama-darwin.zip" target="_blank" class="btn btn-primary" style="text-decoration:none">⬇ Descargar Ollama para Mac</a>
+            <span style="font-size:12px;color:var(--t3)">Descomprime y mueve a Aplicaciones</span>
+          </div>
+          <div class="sh" style="margin-top:0;margin-bottom:8px">Opción B — Homebrew</div>
+          <div class="cmd-block" onclick="copyCmd(this)"><code>brew install ollama</code><span class="cmd-copy">📋 Copiar</span></div>
+        </div>
+        <div id="installWin" style="display:none">
+          <div class="sh" style="margin-top:0;margin-bottom:8px">Descarga el instalador</div>
+          <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px">
+            <a href="https://ollama.com/download/OllamaSetup.exe" target="_blank" class="btn btn-primary" style="text-decoration:none">⬇ Descargar Ollama para Windows</a>
+            <span style="font-size:12px;color:var(--t3)">Ejecuta el .exe y sigue el instalador</span>
+          </div>
+          <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:var(--r);padding:10px 14px;font-size:12px;color:var(--amber)">
+            ⚠️ Requiere Windows 10/11 (64-bit). Para NVIDIA necesitas drivers ≥ 452.39.
+          </div>
+        </div>
+        <div id="installLinux" style="display:none">
+          <div class="sh" style="margin-top:0;margin-bottom:8px">Un solo comando</div>
+          <div class="cmd-block" onclick="copyCmd(this)"><code>curl -fsSL https://ollama.com/install.sh | sh</code><span class="cmd-copy">📋 Copiar</span></div>
+          <div style="font-size:12px;color:var(--t3);margin-top:8px">Compatible con Ubuntu 20.04+, Debian, Fedora, Arch. Detecta automáticamente NVIDIA/AMD/CPU.</div>
+        </div>
+        <div id="installNone" style="font-size:13px;color:var(--t3);padding:8px 0">
+          👆 Selecciona tu sistema operativo arriba
+        </div>
+      </div>
+    </div>
+
+    <!-- ── PASO 4: DESCARGAR MODELO ── -->
+    <div class="sh">📦 Paso 4 — Descargar el modelo seleccionado</div>
+    <div style="background:#ffffff;border:1px solid var(--border);border-radius:var(--rl);padding:20px;margin-bottom:20px" id="pullBox">
+      <div id="pullPlaceholder" style="font-size:13px;color:var(--t3)">Selecciona un modelo en el Paso 2 para ver el comando de descarga.</div>
+      <div id="pullContent" style="display:none">
+        <div style="font-size:13px;color:var(--t2);margin-bottom:12px">
+          Abre una terminal y ejecuta este comando. La primera descarga puede tardar varios minutos según tu conexión.
+        </div>
+        <div style="margin-bottom:10px">
+          <div style="font-size:11px;color:var(--t3);margin-bottom:4px">1️⃣ Descarga el modelo</div>
+          <div class="cmd-block" id="pullCmd" onclick="copyCmd(this)"><code id="pullCmdText">ollama pull llama3.2</code><span class="cmd-copy">📋 Copiar</span></div>
+        </div>
+        <div style="margin-bottom:10px">
+          <div style="font-size:11px;color:var(--t3);margin-bottom:4px">2️⃣ (Opcional) Prueba rápida en terminal</div>
+          <div class="cmd-block" id="runCmd" onclick="copyCmd(this)"><code id="runCmdText">ollama run llama3.2 "Hola, responde en una frase"</code><span class="cmd-copy">📋 Copiar</span></div>
+        </div>
+        <div id="pullSizeNote" style="font-size:12px;color:var(--t3);padding:8px 12px;background:#f7f8fa;border-radius:var(--r)"></div>
+      </div>
+    </div>
+
+    <!-- ── PASO 5: VERIFICAR CONEXIÓN ── -->
+    <div class="sh">✅ Paso 5 — Verificar que todo funciona</div>
+    <div style="background:#ffffff;border:1px solid var(--border);border-radius:var(--rl);padding:20px;margin-bottom:20px">
+      <div style="font-size:13px;color:var(--t2);margin-bottom:14px">
+        Con Ollama corriendo en tu máquina, comprueba que Doctoralia Local puede conectarse.
+      </div>
+      <div style="display:flex;gap:10px;align-items:flex-end;margin-bottom:12px">
+        <div class="field" style="flex:1;margin-bottom:0">
+          <label>URL de Ollama</label>
+          <input type="text" id="ollamaHost" value="http://localhost:11434" placeholder="http://localhost:11434">
+        </div>
+        <button class="btn btn-primary" id="btnTestConn" onclick="testOllamaConnection()">🔌 Probar conexión</button>
+      </div>
+      <div id="connResult" style="display:none;border-radius:var(--r);padding:12px 16px;font-size:13px"></div>
+
+      <!-- Modelos instalados detectados -->
+      <div id="installedModelsBox" style="display:none;margin-top:14px">
+        <div class="sh" style="margin-top:0;margin-bottom:8px">Modelos instalados en Ollama</div>
+        <div id="installedModelsList" style="display:flex;flex-wrap:wrap;gap:8px"></div>
+        <div style="margin-top:12px;display:flex;gap:8px;align-items:flex-end">
+          <div class="field" style="flex:1;margin-bottom:0">
+            <label>Modelo activo para Doctoralia Local</label>
+            <select id="model" onchange="onModelChange()" style="font-size:13px"></select>
+          </div>
+          <button class="btn btn-success" onclick="saveAndGo()" style="white-space:nowrap">✅ Guardar y empezar →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Banner listo -->
+    <div id="setupReadyBanner" style="display:none;background:linear-gradient(135deg,#f0fdf4,#eff6ff);border:1px solid #bbf7d0;border-radius:var(--rl);padding:20px;text-align:center;margin-bottom:20px">
+      <div style="font-size:32px;margin-bottom:8px">🎉</div>
+      <div style="font-size:16px;font-weight:500;color:var(--text);margin-bottom:4px">¡Todo listo! Ollama conectado</div>
+      <div style="font-size:13px;color:var(--t2);margin-bottom:16px">Modelo activo: <strong id="readyModelName">—</strong></div>
+      <button class="btn btn-primary" style="padding:10px 28px;font-size:14px" onclick="saveAndGo()">▶ Ir a Nueva revisión</button>
+    </div>
+
+  </div><!-- /tc-setup -->
+
+</div><!-- /main -->
+</div><!-- /app -->
+
+<script>
+// ═══════════════════════════════════════════════════
+//  AGENT DEFINITIONS
+// ═══════════════════════════════════════════════════
+const AGENTS=[
+  {id:'scout',phase:'1 – Research',badge:'b-r',role:'Research Scout — genera queries y preguntas de investigación',def:1000},
+  {id:'signal',phase:'1 – Research',badge:'b-r',role:'Citation Finder — rankea papers por relevancia y clusters temáticos',def:3000},
+  {id:'scribe',phase:'1 – Research',badge:'b-r',role:'State of Art Reviewer — revisión base comprehensiva (≈7500 words)',def:7500},
+  {id:'data_analyst',phase:'1 – Research',badge:'b-r',role:'Academic Trend Analyzer — bibliometría y tendencias temporales',def:2000},
+  {id:'gap_detector',phase:'1 – Research',badge:'b-r',role:'Research Gap Identifier — brechas en literatura (PRISMA)',def:2000},
+  {id:'architect',phase:'2 – Structure',badge:'b-w',role:'Document Architect — estructura y distribución de palabras',def:2000},
+  {id:'crafter',phase:'3 – Writing',badge:'b-w',role:'Academic Section Writer — redacta cada sección individualmente',def:4000},
+  {id:'thread',phase:'3 – Writing',badge:'b-w',role:'Coherence Checker — revisa transiciones entre secciones',def:800},
+  {id:'narrator',phase:'3 – Writing',badge:'b-w',role:'Voice Refiner — mejora estilo académico y fluidez',def:3000},
+  {id:'skeptic',phase:'4 – Validation',badge:'b-v',role:'Fact Checker — detecta afirmaciones sin cita',def:800},
+  {id:'verifier',phase:'4 – Validation',badge:'b-v',role:'Citation Validator — verifica coherencia citas/referencias',def:800},
+  {id:'referee',phase:'4 – Validation',badge:'b-v',role:'Peer Reviewer — puntúa rigor, cobertura, claridad (1-5)',def:800},
+  {id:'polish',phase:'5 – Polish',badge:'b-p',role:'Final Editor — gramática, terminología, voz pasiva',def:3000},
+  {id:'enhancer',phase:'5 – Polish',badge:'b-p',role:'Publication Enhancer — abstract 250w + keywords + highlights',def:2000},
+  {id:'entropy',phase:'5 – Polish',badge:'b-p',role:'Originality Checker — puntúa originalidad del texto (1-10)',def:500},
+  {id:'methodology',phase:'Auxiliar',badge:'b-a',role:'Methodology Designer — sección PRISMA sistemática',def:1500},
+  {id:'results_synthesizer',phase:'Auxiliar',badge:'b-a',role:'Findings Synthesizer — síntesis ejecutiva 5-7 bullets',def:1500},
+  {id:'conclusion_writer',phase:'Auxiliar',badge:'b-a',role:'Conclusion Writer — conclusiones 400-500 palabras',def:1500},
+  {id:'voice',phase:'Auxiliar',badge:'b-a',role:'Tone Optimizer — adapta texto para audiencias específicas',def:2000},
+  {id:'formatter',phase:'Auxiliar',badge:'b-a',role:'Academic Formatter — aplica guías de estilo IEEE/APA/ACM',def:2000},
+];
+
+// ═══════════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════════
+let generatedText='',allPapersStore=[],gapsStore='',sectionTextsStore={};
+let isRunning=false,tStart=0,qualityScore='N/A';
+let currentWizardStep=1;
+let shouldStop=false;
+
+function stopGeneration(){
+  shouldStop=true;
+  log('⏹ Parando tras el paso actual...','warn');
+}
+const HP_STEPS=[
+  {id:'hp-search',   text:'Buscando artículos en las bases de datos...'},
+  {id:'hp-analyze',  text:'Analizando y rankeando los papers más relevantes...'},
+  {id:'hp-plan',     text:'Planificando la estructura del artículo...'},
+  {id:'hp-write',    text:'Redactando secciones del artículo...'},
+  {id:'hp-validate', text:'Validando citas y calidad académica...'},
+  {id:'hp-polish',   text:'Aplicando edición final y generando metadatos...'},
+  {id:'hp-done',     text:'¡Revisión completada con éxito!'},
+];
+let currentHPStep=-1;
+
+// ═══════════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded',()=>{
+  // ── Aviso si se abre como file:// ──────────────────
+  if(location.protocol==='file:'){
+    const warn=document.createElement('div');
+    warn.style.cssText='position:fixed;top:0;left:0;right:0;z-index:9999;background:#dc2626;color:#fff;text-align:center;padding:10px 16px;font-size:13px;font-family:sans-serif;line-height:1.5';
+    warn.innerHTML='⚠️ <strong>Abierto como fichero local (file://)</strong> — las APIs externas no funcionan desde file://. '
+      +'Usa un servidor local: <code style="background:rgba(0,0,0,.3);padding:2px 6px;border-radius:3px">python3 -m http.server 8080</code> y abre <code style="background:rgba(0,0,0,.3);padding:2px 6px;border-radius:3px">http://localhost:8080</code>';
+    document.body.prepend(warn);
+  }
+  // Restaurar host/modelo Ollama guardados
+  const savedHost=localStorage.getItem('doctoralia_ollama_host');
+  if(savedHost)document.getElementById('ollamaHost').value=savedHost;
+  const savedModel=localStorage.getItem('doctoralia_ollama_model');
+  if(savedModel){document.getElementById('modelManual').value=savedModel;onModelChange();}
+  if(localStorage.getItem('doctoralia_setup_done')){
+    document.getElementById('setupWizard').style.display='none';
+    setTimeout(()=>testOllamaConnection(),800);
+  }else{
+    swActivateStep(1);
+  }
+  buildAgentTable();
+  updateEstimate();
+  renderHistory();
+  buildHPSteps();
+  const draft=localStorage.getItem('doctoralia_draft');
+  if(draft){try{const d=JSON.parse(draft);if(d.text){showDraftBanner(d);}}catch(e){}}
+  // Auto-detect OS and select install tab
+  const detectedOS=detectOS()||localStorage.getItem('doctoralia_os');
+  if(detectedOS)selectOS(detectedOS);
+  // Auto-test connection on load
+  setTimeout(()=>testOllamaConnection(),800);
+});
+
+// ═══════════════════════════════════════════════════
+//  ONBOARDING
+// ═══════════════════════════════════════════════════
+let obStep=1;
+// ═══════════════════════════════════════════════════
+//  SETUP WIZARD — simplificado
+// ═══════════════════════════════════════════════════
+
+// Catálogo compacto ordenado por idoneidad
+const SW_MODELS=[
+  {id:'llama3.2:1b',  label:'Llama 3.2 1B',  gb:0.8, ram:4,  desc:'Ultra ligero · para <4GB RAM',    emoji:'⚡'},
+  {id:'llama3.2',     label:'Llama 3.2 3B',  gb:2.0, ram:4,  desc:'Rápido · recomendado para empezar',emoji:'🏎️'},
+  {id:'phi3.5',       label:'Phi-3.5 Mini',  gb:2.2, ram:4,  desc:'Rápido · muy bueno en ciencia',   emoji:'🔬'},
+  {id:'mistral',      label:'Mistral 7B',    gb:4.1, ram:8,  desc:'Buena escritura académica',        emoji:'📝'},
+  {id:'qwen2.5',      label:'Qwen 2.5 7B',  gb:4.7, ram:8,  desc:'Excelente en español',             emoji:'🌏'},
+  {id:'llama3.1',     label:'Llama 3.1 8B', gb:4.7, ram:8,  desc:'El más popular de Meta',           emoji:'⭐'},
+  {id:'qwen2.5:14b',  label:'Qwen 2.5 14B', gb:9.0, ram:16, desc:'Alta calidad en español',          emoji:'🏆'},
+  {id:'phi4',         label:'Phi-4 14B',    gb:9.1, ram:16, desc:'Razonamiento científico avanzado',  emoji:'🧠'},
+  {id:'deepseek-r1',  label:'DeepSeek-R1',  gb:4.7, ram:8,  desc:'Razonamiento paso a paso',         emoji:'🧩'},
+  {id:'gemma2',       label:'Gemma 2 9B',   gb:5.5, ram:10, desc:'Sólido · de Google',               emoji:'🟢'},
+];
+
+let swSelectedModel = null;
+let swDetectedRam   = 0;
+let swModelListOpen = false;
+
+// ── Activa visualmente un step ────────────────────
+function swActivateStep(n){
+  for(let i=1;i<=4;i++){
+    const el=document.getElementById('sw-step'+i);
+    if(!el)continue;
+    if(i<=n){el.style.opacity='1';el.style.pointerEvents='auto';}
+    // Marcar completados en verde
+    if(i<n){
+      const num=document.getElementById('sw-s'+i+'-num');
+      if(num){num.style.background='#15803d';num.textContent='✓';}
+    }
+    if(i===n){
+      const num=document.getElementById('sw-s'+i+'-num');
+      if(num){num.style.background='#2563eb';num.textContent=String(i);}
+    }
+  }
+}
+
+// ── PASO 1: Detectar hardware ─────────────────────
+async function swDetectHardware(){
+  const btn=document.getElementById('sw-detect-btn');
+  const sub=document.getElementById('sw-s1-sub');
+  btn.textContent='Detectando...';btn.disabled=true;
+
+  let ram=0, vram=0, gpuName='', isApple=false;
+
+  // RAM via deviceMemory
+  if(navigator.deviceMemory) ram=Math.max(navigator.deviceMemory,8);
+
+  // GPU via WebGL
+  try{
+    const c=document.createElement('canvas');
+    const gl=c.getContext('webgl')||c.getContext('experimental-webgl');
+    if(gl){
+      const ext=gl.getExtension('WEBGL_debug_renderer_info');
+      if(ext){
+        const r=gl.getParameter(ext.UNMASKED_RENDERER_WEBGL)||'';
+        const v=gl.getParameter(ext.UNMASKED_VENDOR_WEBGL)||'';
+        gpuName=r;
+        if(/apple/i.test(v)||/apple m[1-9]/i.test(r)){isApple=true;vram=Math.round((ram||16)*0.6);}
+        else if(/RTX 40[8-9]/i.test(r)||/RTX 40[7-9][0-9]/i.test(r))vram=16;
+        else if(/RTX 40[5-7]/i.test(r))vram=12;
+        else if(/RTX 30[7-9]/i.test(r)||/RTX 3090/i.test(r))vram=24;
+        else if(/RTX 30[5-6]/i.test(r))vram=8;
+        else if(/RTX 20[6-9]/i.test(r))vram=8;
+        else if(/GTX 16/i.test(r))vram=6;
+        else if(/GTX 10[6-9]/i.test(r))vram=6;
+        else if(/RX 7[89]/i.test(r)||/RX 69/i.test(r))vram=16;
+        else if(/RX [67][5-8]/i.test(r))vram=8;
+      }
+    }
+  }catch(e){}
+
+  // RAM fallback por núcleos
+  if(!ram){const cores=navigator.hardwareConcurrency||4;ram=cores>=12?32:cores>=8?16:cores>=4?8:4;}
+  swDetectedRam=ram;
+
+  // Resultado legible
+  const memDisplay=isApple?`${ram}GB memoria unificada (Apple Silicon)`:`${ram}GB RAM${vram?` · GPU ${vram}GB VRAM`:''}`;
+  const hwResultEl=document.getElementById('sw-hw-result');
+  hwResultEl.style.display='block';
+  hwResultEl.querySelector('#sw-hw-text').textContent=`✓ ${memDisplay}${gpuName?' · '+gpuName.slice(0,45):''}`;
+
+  btn.textContent='✓ Detectado';
+  btn.style.background='#15803d';
+  sub.textContent='Hardware detectado correctamente';
+
+  // Elegir modelo
+  swPickModel(ram,vram,isApple);
+  swActivateStep(2);
+  setTimeout(()=>swActivateStep(3),400);
+  setTimeout(()=>swActivateStep(4),600);
+}
+
+// ── PASO 2: Elegir modelo ─────────────────────────
+function swPickModel(ram,vram,isApple){
+  const mem=isApple?ram:Math.max(vram||0,ram*0.55);
+  // Mejor modelo que cabe cómodamente
+  const fits=SW_MODELS.filter(m=>ram>=m.ram&&mem>=m.gb*1.15);
+  // Preferir multilingüe si RAM ≥ 8
+  const preferred=fits.find(m=>m.id==='qwen2.5'&&ram>=8)
+    ||fits.find(m=>m.id==='llama3.2'&&ram>=4)
+    ||fits[fits.length-1]
+    ||SW_MODELS[1];
+
+  swSelectedModel=preferred;
+  document.getElementById('sw-model-chosen').style.display='block';
+  document.getElementById('sw-model-name').textContent=preferred.label;
+  document.getElementById('sw-model-desc').textContent=`${preferred.emoji} ${preferred.desc} · ${preferred.gb}GB descarga`;
+  document.getElementById('sw-model-display').textContent='Basado en tu hardware:';
+
+  // Rellena lista de alternativas
+  const list=document.getElementById('sw-model-list');
+  list.innerHTML=fits.filter(m=>m.id!==preferred.id).map(m=>`
+    <div onclick="swSelectModel('${m.id}')" style="display:flex;align-items:center;gap:10px;padding:9px 12px;border:1px solid #e2e8f0;border-radius:8px;cursor:pointer;transition:background .15s" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background=''">
+      <span style="font-size:16px">${m.emoji}</span>
+      <div style="flex:1">
+        <div style="font-size:13px;font-weight:500;color:#0f172a">${m.label}</div>
+        <div style="font-size:11px;color:#94a3b8">${m.desc} · ${m.gb}GB</div>
+      </div>
+      <span style="font-size:11px;color:#2563eb">Usar</span>
+    </div>`).join('');
+
+  // Comandos
+  swUpdateCommands(preferred.id);
+}
+
+function swSelectModel(id){
+  const m=SW_MODELS.find(x=>x.id===id)||SW_MODELS[1];
+  swSelectedModel=m;
+  document.getElementById('sw-model-name').textContent=m.label;
+  document.getElementById('sw-model-desc').textContent=`${m.emoji} ${m.desc} · ${m.gb}GB descarga`;
+  swUpdateCommands(m.id);
+  // Colapsar lista
+  document.getElementById('sw-model-list').style.display='none';
+  document.getElementById('sw-change-btn').textContent='▶ Ver otros modelos compatibles';
+  swModelListOpen=false;
+  // Guardar
+  document.getElementById('modelManual').value=m.id;
+  onModelChange();
+}
+
+function swToggleModelList(){
+  swModelListOpen=!swModelListOpen;
+  const list=document.getElementById('sw-model-list');
+  const btn=document.getElementById('sw-change-btn');
+  list.style.display=swModelListOpen?'flex':'none';
+  btn.textContent=swModelListOpen?'▼ Ocultar opciones':'▶ Ver otros modelos compatibles';
+}
+
+// ── PASO 3: Comandos según OS ─────────────────────
+function swUpdateCommands(modelId){
+  const os=swDetectOS();
+  const cmd1El=document.getElementById('sw-cmd1-text');
+  const cmd2El=document.getElementById('sw-cmd2-text');
+  const osLabel=document.getElementById('sw-os-label');
+  const cmds={
+    mac:  {label:'macOS detectado',     install:'brew install ollama   # o descarga en ollama.com'},
+    win:  {label:'Windows detectado',   install:'winget install Ollama.Ollama'},
+    linux:{label:'Linux detectado',     install:'curl -fsSL https://ollama.com/install.sh | sh'},
+  };
+  const c=cmds[os]||cmds.linux;
+  osLabel.textContent=c.label;
+  cmd1El.textContent=c.install;
+  cmd2El.textContent=`ollama run ${modelId}`;
+  // Guardar modelo
+  document.getElementById('modelManual').value=modelId;
+  onModelChange();
+}
+
+function swDetectOS(){
+  const ua=navigator.userAgent;
+  if(/Mac/i.test(ua))return 'mac';
+  if(/Win/i.test(ua))return 'win';
+  return 'linux';
+}
+
+// ── PASO 3: Copiar comando ────────────────────────
+function swCopy(block){
+  const code=block.querySelector('code');
+  if(!code)return;
+  // Limpiar comentarios al copiar (ej. "# o descarga en ollama.com")
+  const text=code.textContent.split('#')[0].trim();
+  navigator.clipboard.writeText(text).then(()=>{
+    const label=block.querySelector('.sw-copy-label');
+    const orig=label.textContent;
+    label.textContent='✓ Copiado';
+    label.style.color='#4ade80';
+    block.style.background='#14532d';
+    setTimeout(()=>{label.textContent=orig;label.style.color='';block.style.background='#0f172a';},2000);
+  });
+}
+
+// ── PASO 4: Conectar ──────────────────────────────
+async function swConnect(){
+  const btn=document.getElementById('sw-connect-btn');
+  const result=document.getElementById('sw-connect-result');
+  btn.textContent='Conectando...';btn.disabled=true;
+  result.style.display='none';
+
+  // ── En localhost HTTP no hay problema de CORS ────
+  const isHttps=location.protocol==='https:';
+  const isLocalhost=location.hostname==='localhost'||location.hostname==='127.0.0.1';
+  const origin=location.origin;
+  const host='http://localhost:11434';
+
+  if(isHttps && !isLocalhost){
+    btn.textContent='Reintentar';btn.disabled=false;
+    result.style.display='block';
+    result.style.cssText='display:block;background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:16px;margin-top:10px;font-size:13px;color:#1e3a5f;line-height:1.8';
+    result.innerHTML=`
+      <div style="font-size:14px;font-weight:500;margin-bottom:10px">🔒 Un paso extra en Mac</div>
+      <div style="margin-bottom:12px;color:#334155">Esta web usa HTTPS y Ollama usa HTTP local. Hay que decirle a Ollama que acepte esta web. <strong>Solo hay que hacerlo una vez.</strong></div>
+      <div style="font-size:11px;color:#64748b;margin-bottom:6px">1 · Cierra Ollama (icono en la barra de menú → Quit)</div>
+      <div style="font-size:11px;color:#64748b;margin-bottom:6px">2 · Abre Terminal y ejecuta:</div>
+      <div onclick="swCopyText(this,'OLLAMA_ORIGINS=${origin} ollama serve')" style="background:#0f172a;border-radius:8px;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;margin-bottom:12px;gap:10px">
+        <code style="font-family:monospace;font-size:12px;color:#7dd3fc;flex:1;word-break:break-all">OLLAMA_ORIGINS=${origin} ollama serve</code>
+        <span style="font-size:11px;color:#475569;flex-shrink:0">Copiar</span>
+      </div>
+      <div style="font-size:11px;color:#64748b;margin-bottom:4px">3 · Deja la terminal abierta y pulsa <strong>Reintentar</strong></div>`;
+    return;
+  }
+
+  // ── Intento real de conexión ───────────────────────
+  try{
+    const r=await fetch(`${host}/api/tags`,{signal:AbortSignal.timeout(6000)});
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    const data=await r.json();
+    const models=(data.models||[]).map(m=>m.name);
+    if(models.length){
+      localStorage.setItem('doctoralia_setup_done','1');
+      if(swSelectedModel){
+        localStorage.setItem('doctoralia_ollama_model',swSelectedModel.id);
+        document.getElementById('modelManual').value=swSelectedModel.id;
+        onModelChange();
+      }
+      const sel=document.getElementById('model');
+      if(sel)sel.innerHTML=models.map(m=>`<option value="${m}">${m}</option>`).join('');
+      showInstalledModels(models);
+      swClose();
+    }else{
+      result.style.display='block';
+      result.style.cssText='display:block;background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:12px 14px;margin-top:10px;font-size:13px;color:#92400e';
+      result.innerHTML=`⚠️ Ollama está corriendo pero sin modelos.<br>En la terminal ejecuta: <code style="background:#fef3c7;padding:2px 6px;border-radius:4px">ollama run ${swSelectedModel?swSelectedModel.id:'llama3.2'}</code>`;
+      btn.textContent='Reintentar';btn.disabled=false;
+    }
+  }catch(e){
+    result.style.display='block';
+    result.style.cssText='display:block;background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:12px 14px;margin-top:10px;font-size:13px;color:#7f1d1d;line-height:1.6';
+    result.innerHTML=`❌ No se puede conectar a Ollama.<br>¿Está corriendo? Prueba en terminal: <code style="background:#fee2e2;padding:2px 6px;border-radius:4px">ollama serve</code>`;
+    btn.textContent='Reintentar';btn.disabled=false;
+  }
+}
+
+function swCopyText(block, text){
+  navigator.clipboard.writeText(text).then(()=>{
+    const span=block.querySelector('span');
+    if(span){const o=span.textContent;span.textContent='✓ Copiado';span.style.color='#4ade80';block.style.background='#14532d';setTimeout(()=>{span.textContent=o;span.style.color='';block.style.background='#0f172a';},2000);}
+  });
+}
+
+// ── Cerrar wizard ─────────────────────────────────
+function swClose(){
+  const wiz=document.getElementById('setupWizard');
+  if(wiz){wiz.style.opacity='0';wiz.style.transition='opacity .4s';setTimeout(()=>wiz.style.display='none',400);}
+  log('✅ Setup completado. ¡Bienvenido a Doctoralia Local!','ok');
+}
+
+function swSkip(){
+  localStorage.setItem('doctoralia_setup_done','1');
+  swClose();
+  setTimeout(()=>testOllamaConnection(),600);
+}
+
+// ── Reabrir setup desde el menú ──────────────────
+function openOnboard(){
+  const wiz=document.getElementById('setupWizard');
+  if(wiz){wiz.style.display='flex';wiz.style.opacity='1';}
+}
+function closeOnboard(){swClose();}
+
+
+
+// ═══════════════════════════════════════════════════
+//  MAIN NAV
+// ═══════════════════════════════════════════════════
+const PANEL_META={
+  setup:{title:'Setup Ollama',sub:'Detecta tu hardware, elige un modelo e instala Ollama paso a paso'},
+  wizard:{title:'Nueva revisión',sub:'Configura tu tema y genera un artículo científico completo'},
+  output:{title:'Artículo generado',sub:'Edita, descarga o copia tu revisión'},
+  gaps:{title:'Gaps detectados',sub:'Brechas en la literatura identificadas automáticamente'},
+  history:{title:'Historial',sub:'Revisiones guardadas localmente en tu navegador'},
+  agents:{title:'Agentes & Tokens',sub:'Configura cada agente del pipeline'},
+  sources:{title:'Fuentes & Límites',sub:'Bases de datos académicas open access'},
+};
+function showMain(name){
+  Object.keys(PANEL_META).forEach(t=>{const tc=document.getElementById('tc-'+t);if(tc)tc.classList.remove('active');const tab=document.getElementById('tab-'+t);if(tab)tab.classList.remove('active');});
+  document.querySelectorAll('.ni-item').forEach(n=>n.classList.remove('active'));
+  const tc=document.getElementById('tc-'+name);if(tc)tc.classList.add('active');
+  const tab=document.getElementById('tab-'+name);if(tab)tab.classList.add('active');
+  document.querySelectorAll('.ni-item').forEach(n=>{if(n.getAttribute('onclick')&&n.getAttribute('onclick').includes("'"+name+"'"))n.classList.add('active');});
+  const m=PANEL_META[name]||{};
+  document.getElementById('topbarTitle').textContent=m.title||name;
+  document.getElementById('topbarSub').textContent=m.sub||'';
+  if(name==='history')renderHistory();
+}
+
+// ═══════════════════════════════════════════════════
+//  WIZARD NAVIGATION
+// ═══════════════════════════════════════════════════
+function goWizard(step){
+  [1,2,3,4].forEach(i=>{
+    document.getElementById('wp'+i).classList.remove('active');
+    const ws=document.getElementById('ws'+i);
+    ws.classList.remove('active','done');
+    if(i<step)ws.classList.add('done');
+  });
+  document.getElementById('wp'+step).classList.add('active');
+  document.getElementById('ws'+step).classList.add('active');
+  currentWizardStep=step;
+  if(step===4)updateEstimate();
+}
+
+// ═══════════════════════════════════════════════════
+//  PRESETS
+// ═══════════════════════════════════════════════════
+const PRESETS={
+  fast:{wc:4000,fast:true,gaps:false,biblio:false,thread:false,enhancer:false,prisma:false,synth:false,ss:true,pm:true,ax:true,oa:false,ep:false,cr:false},
+  std:{wc:8000,fast:false,gaps:true,biblio:true,thread:true,enhancer:true,prisma:true,synth:true,ss:true,pm:true,ax:true,oa:true,ep:true,cr:false},
+  deep:{wc:12000,fast:false,gaps:true,biblio:true,thread:true,enhancer:true,prisma:true,synth:true,ss:true,pm:true,ax:true,oa:true,ep:true,cr:true},
+};
+function applyPreset(key){
+  const p=PRESETS[key];
+  ['fast','std','deep'].forEach(k=>document.getElementById('preset-'+k).classList.remove('selected'));
+  document.getElementById('preset-'+key).classList.add('selected');
+  document.getElementById('wc').value=p.wc;
+  document.getElementById('wcv').textContent=p.wc.toLocaleString()+' palabras';
+  ['fast','gaps','biblio','thread','enhancer','prisma','synth'].forEach(t=>{
+    const el=document.getElementById('tog-'+t);
+    if(el){if(p[t])el.classList.add('on');else el.classList.remove('on');}
+  });
+  ['ss','pm','ax','oa','ep','cr'].forEach(s=>{
+    const chk=document.getElementById('chk-'+s);
+    const sc=document.getElementById('sc-'+s);
+    if(chk){chk.checked=p[s];if(sc)sc.classList.toggle('on',p[s]);}
+  });
+  updateEstimate();
+}
+
+// ═══════════════════════════════════════════════════
+//  COST ESTIMATOR
+// ═══════════════════════════════════════════════════
+// Ollama es gratuito — sin costes de API
+function updateEstimate(){
+  const wc=parseInt(document.getElementById('wc')?.value||8000);
+  const model=getActiveModel()||'(sin modelo)';
+  const fastMode=document.getElementById('tog-fast')?.classList.contains('on');
+  const sources=['ss','pm','ax','oa','ep','cr'].filter(s=>document.getElementById('chk-'+s)?.checked);
+  const extras=['gaps','biblio','thread','enhancer','prisma','synth'].filter(t=>document.getElementById('tog-'+t)?.classList.contains('on'));
+
+  // Tiempo estimado (local es más lento que API)
+  const estMinutes=fastMode?Math.round(6+sources.length*1+wc/1000):Math.round(15+sources.length*1.5+wc/800+extras.length*1.5);
+
+  const setEl=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
+  setEl('estTime',`~${estMinutes} min`);
+  setEl('estWords',wc.toLocaleString());
+  setEl('estSources',sources.length);
+  setEl('estModel',model);
+  // update step3 model display
+  const d=document.getElementById('modelDisplayStep3');if(d)d.textContent=model;
+}
+
+// ═══════════════════════════════════════════════════
+//  HUMAN PROGRESS
+// ═══════════════════════════════════════════════════
+function buildHPSteps(){
+  const c=document.getElementById('hpSteps');if(!c)return;
+  c.innerHTML=HP_STEPS.map((s,i)=>`<div class="hp-step" id="${s.id}"><div class="hp-dot" id="${s.id}-dot"></div><div class="hp-text" id="${s.id}-text">${s.text}</div></div>`).join('');
+}
+function setHPStep(idx){
+  HP_STEPS.forEach((s,i)=>{
+    const dot=document.getElementById(s.id+'-dot');
+    const txt=document.getElementById(s.id+'-text');
+    if(!dot)return;
+    dot.classList.remove('active','done');txt.classList.remove('active','done');
+    if(i<idx){dot.classList.add('done');txt.classList.add('done');}
+    else if(i===idx){dot.classList.add('active');txt.classList.add('active');}
+  });
+  currentHPStep=idx;
+  document.getElementById('progFill').style.width=Math.round((idx/HP_STEPS.length)*100)+'%';
+}
+function showHP(){document.getElementById('humanProgress').classList.add('v');}
+function toggleLog(){
+  const l=document.getElementById('logPanel');
+  l.classList.toggle('open');
+  document.querySelector('.log-toggle').textContent=l.classList.contains('open')?'▼ Ocultar log técnico ':'▶ Ver log técnico ';
+}
+
+// ═══════════════════════════════════════════════════
+//  OLLAMA SETUP
+// ═══════════════════════════════════════════════════
+function getActiveModel(){
+  const manual=document.getElementById('modelManual').value.trim();
+  if(manual)return manual;
+  const sel=document.getElementById('model').value;
+  return sel||'';
+}
+
+function onModelChange(){
+  const m=getActiveModel();
+  updateEstimate();
+  const d=document.getElementById('modelDisplayStep3');
+  if(d)d.textContent=m||'— configura en el panel superior —';
+  if(m){localStorage.setItem('doctoralia_ollama_model',m);}
+}
+
+function toggleHardwarePanel(){
+  const p=document.getElementById('hardwarePanel');
+  const a=document.getElementById('hwPanelArrow');
+  const open=p.style.display==='none';
+  p.style.display=open?'block':'none';
+  a.textContent=open?'▲ Cerrar':'▼ Abrir';
+}
+
+async function testOllamaConnection(){
+  const host=document.getElementById('ollamaHost').value.trim()||'http://localhost:11434';
+  const btn=document.getElementById('btnTestConn');
+  const badge=document.getElementById('ollamaStatusBadge');
+  const connResult=document.getElementById('connResult');
+  btn.textContent='⏳ Probando...';btn.disabled=true;
+  if(connResult)connResult.style.display='none';
+
+  // ── Detección anticipada de Mixed Content ──────────────────────────────
+  // Si la página está en HTTPS y el host es http://, el navegador bloqueará
+  // la request ANTES de que llegue a Ollama — no es un fallo de Ollama.
+  const pageIsHttps=location.protocol==='https:';
+  const hostIsHttp=host.startsWith('http://');
+  if(pageIsHttps&&hostIsHttp){
+    setBadgeError(badge);
+    if(connResult)showConnError(connResult,'mixed-content',host);
+    btn.textContent='🔌 Probar conexión';btn.disabled=false;
+    return;
+  }
+
+  try{
+    const r=await fetch(`${host}/api/tags`,{signal:AbortSignal.timeout(6000)});
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    const data=await r.json();
+    const models=(data.models||[]).map(m=>m.name);
+    const sel=document.getElementById('model');
+    const saved=localStorage.getItem('doctoralia_ollama_model')||'';
+    sel.innerHTML=models.length
+      ? models.map(m=>`<option value="${m}" ${m===saved?'selected':''}>${m}</option>`).join('')
+      : '<option value="">No hay modelos — ejecuta: ollama pull llama3.2</option>';
+    if(models.length){
+      badge.textContent='🟢 Conectado · '+models.length+' modelos';
+      badge.style.cssText='margin-left:auto;font-size:11px;background:rgba(5,150,105,.12);color:var(--teal);padding:3px 9px;border-radius:20px;border:1px solid rgba(5,150,105,.3)';
+      document.getElementById('avI').textContent='🟢';
+      document.getElementById('avL').textContent=getActiveModel()||models[0];
+      document.getElementById('avSub').textContent=models.length+' modelos listos';
+      const dot=document.getElementById('setupDot');const tabDot=document.getElementById('setupTabDot');
+      if(dot)dot.style.background='var(--teal)';
+      if(tabDot)tabDot.style.background='var(--teal)';
+      if(connResult)showConnSuccess(connResult,models);
+      showInstalledModels(models);
+      log(`✅ Ollama conectado. Modelos: ${models.join(', ')}`,'ok');
+    }else{
+      badge.textContent='🟡 Conectado — sin modelos';
+      badge.style.cssText='margin-left:auto;font-size:11px;background:rgba(245,158,11,.12);color:var(--amber);padding:3px 9px;border-radius:20px;border:1px solid rgba(245,158,11,.3)';
+      if(connResult)showConnError(connResult,'no-models',host);
+      log('⚠️ Ollama responde pero no hay modelos instalados.','warn');
+    }
+    onModelChange();
+    localStorage.setItem('doctoralia_ollama_host',host);
+  }catch(e){
+    setBadgeError(badge);
+    document.getElementById('avI').textContent='🔴';
+    // Diagnosticar tipo de error
+    const errMsg=e.message||'';
+    const isCors=errMsg.includes('CORS')||errMsg.includes('cors')||errMsg.includes('NetworkError')||errMsg.includes('Failed to fetch')||errMsg.includes('fetch');
+    if(connResult)showConnError(connResult, isCors?'cors':'down', host);
+    log(`❌ Error conectando a Ollama: ${errMsg}`,'err');
+  }finally{btn.textContent='🔌 Probar conexión';btn.disabled=false;}
+}
+
+function setBadgeError(badge){
+  if(!badge)return;
+  badge.textContent='🔴 Sin conexión';
+  badge.style.cssText='margin-left:auto;font-size:11px;background:rgba(220,38,38,.12);color:var(--red);padding:3px 9px;border-radius:20px;border:1px solid rgba(220,38,38,.3)';
+}
+
+function showConnSuccess(el,models){
+  el.style.display='block';
+  el.style.cssText='display:block;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:var(--r);padding:14px 16px;font-size:13px';
+  el.innerHTML=`<div style="font-weight:500;color:var(--teal);margin-bottom:6px">✅ Ollama conectado correctamente</div>
+    <div style="color:var(--t2)">Modelos instalados: <strong>${models.join(', ')}</strong></div>
+    <div style="color:var(--t3);font-size:11px;margin-top:4px">Selecciona el modelo activo abajo y pulsa "Guardar y empezar →"</div>`;
+}
+
+function showConnError(el,type,host){
+  el.style.display='block';
+  el.style.cssText='display:block;border-radius:var(--r);padding:0;font-size:13px;overflow:hidden';
+  const origin=location.origin;
+  const isGithub=origin.includes('github.io');
+
+  const fixes={
+    'mixed-content':{
+      icon:'🔒',title:'Bloqueo Mixed Content (HTTPS → HTTP)',
+      color:'#7c3aed',bg:'#f5f3ff',border:'#ddd6fe',
+      body:`Tu página está en <strong>HTTPS</strong> pero Ollama usa <strong>HTTP</strong>. Los navegadores bloquean esto por seguridad — no es un fallo de Ollama ni de la app.
+      <br><br><strong>Solución: configura Ollama para aceptar tu origen</strong>`,
+      steps:[
+        {os:'macOS / Linux',cmds:[
+          `launchctl setenv OLLAMA_ORIGINS "${origin}"`,
+          `OLLAMA_ORIGINS="${origin}" ollama serve`
+        ]},
+        {os:'Windows (PowerShell)',cmds:[
+          `$env:OLLAMA_ORIGINS="${origin}"`,
+          `ollama serve`
+        ]},
+        {os:'Linux (systemd)',cmds:[
+          `sudo systemctl edit ollama`,
+          `# Añade estas líneas en el editor:\n[Service]\nEnvironment="OLLAMA_ORIGINS=${origin}"`,
+          `sudo systemctl restart ollama`
+        ]}
+      ],
+      note: isGithub?`⚠️ GitHub Pages (HTTPS) siempre necesitará este ajuste. Considera alojar la app en <strong>http://</strong> o usar un servidor local.`:null
+    },
+    'cors':{
+      icon:'🚫',title:'Error CORS — Ollama no permite este origen',
+      color:'#b45309',bg:'#fffbeb',border:'#fde68a',
+      body:`Ollama está corriendo pero rechaza las peticiones desde <strong>${origin}</strong>. Necesitas añadir tu origen a la variable <code>OLLAMA_ORIGINS</code>.`,
+      steps:[
+        {os:'macOS / Linux (terminal)',cmds:[
+          `OLLAMA_ORIGINS="${origin}" ollama serve`
+        ]},
+        {os:'macOS (LaunchAgent)',cmds:[
+          `launchctl setenv OLLAMA_ORIGINS "${origin}"`,
+          `# Reinicia Ollama desde la barra de menú`
+        ]},
+        {os:'Windows (PowerShell)',cmds:[
+          `$env:OLLAMA_ORIGINS="${origin}"`,
+          `ollama serve`
+        ]},
+        {os:'Linux (systemd)',cmds:[
+          `sudo systemctl edit ollama`,
+          `# Añade:\n[Service]\nEnvironment="OLLAMA_ORIGINS=${origin}"`,
+          `sudo systemctl restart ollama`
+        ]}
+      ],
+      note:null
+    },
+    'down':{
+      icon:'💤',title:'Ollama no está corriendo',
+      color:'#dc2626',bg:'#fef2f2',border:'#fecaca',
+      body:`No se detecta Ollama en <strong>${host}</strong>. Asegúrate de que está instalado y en ejecución.`,
+      steps:[
+        {os:'Iniciar Ollama',cmds:['ollama serve']}
+      ],
+      note:'Si acabas de instalar Ollama, puede que necesites abrir la aplicación primero (macOS/Windows) o ejecutar <code>ollama serve</code> en terminal.'
+    },
+    'no-models':{
+      icon:'📭',title:'Ollama conectado — pero sin modelos instalados',
+      color:'#d97706',bg:'#fffbeb',border:'#fde68a',
+      body:'Ollama está corriendo pero no tienes ningún modelo descargado. Elige uno en el Paso 2 y ejecuta el comando de descarga.',
+      steps:[
+        {os:'Descargar un modelo recomendado',cmds:['ollama pull llama3.2']}
+      ],
+      note:null
+    }
+  };
+
+  const f=fixes[type]||fixes['down'];
+  let stepsHtml=f.steps.map(s=>`
+    <div style="margin-bottom:10px">
+      <div style="font-size:11px;font-weight:500;color:#6b7280;margin-bottom:4px">${s.os}</div>
+      ${s.cmds.map(c=>`<div class="cmd-block" onclick="copyCmd(this)" style="margin-bottom:4px"><code>${c.replace(/\n/g,'<br>')}</code><span class="cmd-copy">📋 Copiar</span></div>`).join('')}
+    </div>`).join('');
+
+  el.innerHTML=`
+    <div style="background:${f.bg};border:1px solid ${f.border};border-radius:var(--r);padding:14px 16px">
+      <div style="font-weight:500;color:${f.color};margin-bottom:8px">${f.icon} ${f.title}</div>
+      <div style="color:var(--t2);margin-bottom:12px;line-height:1.6">${f.body}</div>
+      ${stepsHtml}
+      ${f.note?`<div style="font-size:11px;color:var(--t3);margin-top:8px;padding-top:8px;border-top:1px solid ${f.border};line-height:1.5">${f.note}</div>`:''}
+      <button class="btn btn-primary" style="margin-top:10px;font-size:12px" onclick="testOllamaConnection()">🔄 Reintentar conexión</button>
+    </div>`;
+}
+
+async function refreshModelList(){
+  await testOllamaConnection();
+}
+
+// ── CATÁLOGO CURADO DE MODELOS (para detector de hardware) ──
+const OLLAMA_CATALOG=[
+  {name:'llama3.2',      size_gb:2.0,  ram_min:4,  vram_min:0, tags:['🏎️ Rápido','💪 Recomendado'],  desc:'Llama 3.2 3B — el más rápido, buena calidad'},
+  {name:'llama3.2:1b',   size_gb:1.3,  ram_min:4,  vram_min:0, tags:['⚡ Ultra rápido'],              desc:'Llama 3.2 1B — ultra ligero, calidad limitada'},
+  {name:'llama3.1',      size_gb:4.7,  ram_min:8,  vram_min:0, tags:['⭐ Popular'],                   desc:'Llama 3.1 8B — equilibrio calidad/velocidad'},
+  {name:'llama3.1:70b',  size_gb:40,   ram_min:48, vram_min:24,tags:['🏆 Alta calidad'],              desc:'Llama 3.1 70B — muy alta calidad, necesita mucho hardware'},
+  {name:'mistral',       size_gb:4.1,  ram_min:8,  vram_min:0, tags:['⭐ Popular','📝 Buena escritura'],desc:'Mistral 7B — muy buena escritura académica'},
+  {name:'mistral-nemo',  size_gb:7.1,  ram_min:12, vram_min:0, tags:['📝 Escritura'],                 desc:'Mistral Nemo 12B — excelente para textos largos'},
+  {name:'qwen2.5',       size_gb:4.7,  ram_min:8,  vram_min:0, tags:['🌏 Multilingüe'],              desc:'Qwen 2.5 7B — muy bueno en español y multilengüe'},
+  {name:'qwen2.5:14b',   size_gb:9.0,  ram_min:16, vram_min:0, tags:['🌏 Multilingüe','⭐ Popular'],  desc:'Qwen 2.5 14B — excelente calidad en español'},
+  {name:'qwen2.5:32b',   size_gb:20,   ram_min:32, vram_min:8, tags:['🏆 Alta calidad'],              desc:'Qwen 2.5 32B — muy alta calidad'},
+  {name:'phi4',          size_gb:9.1,  ram_min:16, vram_min:0, tags:['🔬 Científico'],               desc:'Phi-4 14B de Microsoft — muy bueno en razonamiento'},
+  {name:'phi3.5',        size_gb:2.2,  ram_min:4,  vram_min:0, tags:['🏎️ Rápido','🔬 Científico'],   desc:'Phi-3.5 Mini — pequeño y eficiente de Microsoft'},
+  {name:'gemma2',        size_gb:5.5,  ram_min:8,  vram_min:0, tags:['⭐ Popular'],                   desc:'Gemma 2 9B de Google — buena calidad general'},
+  {name:'gemma2:27b',    size_gb:16,   ram_min:24, vram_min:8, tags:['🏆 Alta calidad'],              desc:'Gemma 2 27B — alta calidad'},
+  {name:'deepseek-r1',   size_gb:4.7,  ram_min:8,  vram_min:0, tags:['🧠 Razonamiento'],             desc:'DeepSeek-R1 7B — razonamiento paso a paso'},
+  {name:'deepseek-r1:14b',size_gb:9.0, ram_min:16, vram_min:0, tags:['🧠 Razonamiento','⭐ Popular'], desc:'DeepSeek-R1 14B — excelente razonamiento complejo'},
+  {name:'deepseek-r1:32b',size_gb:20,  ram_min:32, vram_min:8, tags:['🧠 Razonamiento','🏆 Alta calidad'],desc:'DeepSeek-R1 32B'},
+];
+
+async function detectCompatibleModels(){
+  const ram=parseFloat(document.getElementById('hwRam').value)||16;
+  const vram=parseFloat(document.getElementById('hwVram').value)||0;
+  const container=document.getElementById('hwResults');
+  container.innerHTML='<div style="font-size:12px;color:var(--t3);padding:8px 0">⏳ Detectando modelos compatibles...</div>';
+
+  // Filtrar catálogo local por hardware
+  const usable=OLLAMA_CATALOG.filter(m=>{
+    const effectiveMem=Math.max(ram,vram); // simplificado: usa RAM o VRAM
+    return ram>=m.ram_min && (m.vram_min===0||vram>=m.vram_min) && effectiveMem>=(m.size_gb*1.2);
+  });
+
+  if(!usable.length){
+    container.innerHTML='<div style="font-size:12px;color:var(--red);padding:8px 0">⚠️ Con esa configuración de hardware los modelos serán muy lentos. Prueba con llama3.2:1b (RAM mínima: 4GB).</div>';
+    return;
+  }
+
+  let html=`<div style="font-size:11px;color:var(--t3);margin-bottom:8px">✅ ${usable.length} modelos compatibles con tu hardware (${ram}GB RAM${vram?', '+vram+'GB VRAM':''}):</div>`;
+  html+=`<div style="display:flex;flex-direction:column;gap:6px">`;
+  usable.forEach(m=>{
+    const tags=m.tags.map(t=>`<span style="font-size:9px;padding:1px 6px;border-radius:8px;background:#dbeafe;color:var(--accent)">${t}</span>`).join(' ');
+    html+=`<div style="background:#ffffff;border:1px solid var(--border);border-radius:var(--r);padding:10px 12px;display:flex;align-items:center;gap:10px">
+      <div style="flex:1">
+        <div style="font-size:12px;font-weight:500;color:var(--text);margin-bottom:2px">${m.name} <span style="font-size:10px;color:var(--t3)">(~${m.size_gb}GB)</span></div>
+        <div style="font-size:11px;color:var(--t2);margin-bottom:4px">${m.desc}</div>
+        <div style="display:flex;gap:3px;flex-wrap:wrap">${tags}</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0">
+        <button class="btn btn-primary" style="font-size:11px;padding:4px 10px" onclick="selectModel('${m.name}')">✅ Usar</button>
+        <button class="btn" style="font-size:10px;padding:3px 8px" onclick="copyPullCmd('${m.name}')">📋 Copiar pull</button>
+      </div>
+    </div>`;
+  });
+  html+=`</div>`;
+  container.innerHTML=html;
+}
+
+function selectModel(name){
+  document.getElementById('modelManual').value=name;
+  onModelChange();
+  log(`🦙 Modelo seleccionado: ${name}. Si no lo tienes, ejecuta: ollama pull ${name}`,'ok');
+}
+
+function copyPullCmd(name){
+  const cmd=`ollama pull ${name}`;
+  navigator.clipboard.writeText(cmd).then(()=>{
+    log(`📋 Copiado: ${cmd}`,'ok');
+  });
+}
+
+// ═══════════════════════════════════════════════════
+//  SOURCE SYNC (wizard ↔ sources panel)
+// ═══════════════════════════════════════════════════
+function toggleSrc(id){const c=document.getElementById('chk-'+id);c.checked=!c.checked;document.getElementById('sc-'+id).classList.toggle('on',c.checked);const c2=document.getElementById('chk2-'+id);const sc2=document.getElementById('sc2-'+id);if(c2){c2.checked=c.checked;if(sc2)sc2.classList.toggle('on',c.checked);}updateEstimate();}
+function syncSrc(id){const c2=document.getElementById('chk2-'+id);c2.checked=!c2.checked;document.getElementById('sc2-'+id).classList.toggle('on',c2.checked);const c=document.getElementById('chk-'+id);const sc=document.getElementById('sc-'+id);if(c){c.checked=c2.checked;if(sc)sc.classList.toggle('on',c2.checked);}updateEstimate();}
+function syncLim(id,v){const el=document.getElementById('lim-'+id);if(el)el.value=v;}
+
+// ═══════════════════════════════════════════════════
+//  AGENT TABLE
+// ═══════════════════════════════════════════════════
+function buildAgentTable(){
+  document.getElementById('agentTbody').innerHTML=AGENTS.map(a=>{
+    const saved=localStorage.getItem('dtok_'+a.id);const v=saved?parseInt(saved):a.def;
+    return `<tr><td><strong>${a.id}</strong></td><td><span class="badge ${a.badge}">${a.phase}</span></td><td style="color:var(--t2);font-size:11px">${a.role}</td><td><input type="number" id="tok_${a.id}" value="${v}" min="100" max="16000" step="100" onchange="localStorage.setItem('dtok_${a.id}',this.value)"></td></tr>`;
+  }).join('');
+}
+function resetAgentDefaults(){AGENTS.forEach(a=>{localStorage.removeItem('dtok_'+a.id);const el=document.getElementById('tok_'+a.id);if(el)el.value=a.def;});log('↺ Tokens restaurados.','warn');}
+function getTokens(id){const el=document.getElementById('tok_'+id);if(el)return parseInt(el.value)||1000;return AGENTS.find(a=>a.id===id)?.def||1000;}
+
+// ═══════════════════════════════════════════════════
+//  LOG
+// ═══════════════════════════════════════════════════
+let logCount=0;
+function log(msg,type='info'){
+  const p=document.getElementById('logPanel'),d=document.createElement('div');
+  d.className='ll '+type;
+  const ts=new Date().toLocaleTimeString('es',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  d.textContent=`[${ts}] ${msg}`;p.appendChild(d);p.scrollTop=p.scrollHeight;
+  logCount++;const lc=document.getElementById('logCount');if(lc)lc.textContent=`(${logCount})`;
+}
+function setPhase(n,s){const el=document.getElementById('ph'+n);if(!el)return;el.classList.remove('active','done');if(s)el.classList.add(s);}
+
+// ═══════════════════════════════════════════════════
+//  OLLAMA CALL (reemplaza callAI de OpenAI)
+// ═══════════════════════════════════════════════════
+async function callAI(apiKey,messages,maxTokens=1500,temp=0.7){
+  const host=document.getElementById('ollamaHost').value.trim()||'http://localhost:11434';
+  const model=getActiveModel();
+  if(!model)throw new Error('No hay modelo Ollama seleccionado. Configura el modelo en el panel superior.');
+  const retries=parseInt(document.getElementById('maxRetries').value)||3;
+  for(let attempt=0;attempt<retries;attempt++){
+    if(shouldStop)throw new Error('__STOPPED__');
+    try{
+      const r=await fetch(`${host}/v1/chat/completions`,{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({model,messages,max_tokens:maxTokens,temperature:temp,stream:false})
+      });
+      if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(e?.error?.message||'HTTP '+r.status);}
+      const data=await r.json();
+      return data.choices[0].message.content;
+    }catch(e){
+      if(e.message==='__STOPPED__')throw e;
+      if(attempt<retries-1){const w=Math.pow(2,attempt)*2000;log(`⚠ Reintento ${attempt+1}/${retries}: ${e.message} (${w/1000}s)...`,'warn');await new Promise(r=>setTimeout(r,w));}
+      else throw e;
+    }
+  }
+}
+
+// ═══════════════════════════════════════════════════
+//  SEARCH ENGINES
+// ═══════════════════════════════════════════════════
+async function searchSS(q,max){const p=new URLSearchParams({query:q,limit:Math.min(max,100),offset:0,fields:'paperId,title,abstract,year,authors,venue,citationCount,url,externalIds'});try{const r=await fetch(`https://api.semanticscholar.org/graph/v1/paper/search?${p}`,{headers:{'x-api-key':'uXw4IjvzYg7lLJSR7g3uJ3HQS6rhsgRO6lBbQTWB'}});if(!r.ok)throw new Error('SS '+r.status);return((await r.json()).data||[]).map(p=>({title:p.title||'',authors:(p.authors||[]).slice(0,4).map(a=>a.name),year:String(p.year||''),journal:p.venue||'',abstract:(p.abstract||'').slice(0,500),citations:p.citationCount||0,url:p.url||'',doi:(p.externalIds||{}).DOI||'',source:'Semantic Scholar',oa_status:''}));}catch(e){log('⚠ Semantic Scholar: '+e.message,'warn');return[];}}
+
+async function searchPM(q,max){const email=document.getElementById('pubmedEmail')?.value||'doctoralia@app.io';try{const sp=new URLSearchParams({db:'pubmed',term:`(${q}) AND (English[Language])`,retmax:max,retmode:'json',tool:'doctoralia',email});const pmids=((await(await fetch(`https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?${sp}`)).json()).esearchresult?.idlist||[]).slice(0,max);if(!pmids.length)return[];const fp=new URLSearchParams({db:'pubmed',id:pmids.join(','),retmode:'json',tool:'doctoralia',email});const res=(await(await fetch(`https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?${fp}`)).json()).result||{};return pmids.map(id=>{const a=res[id]||{};return{title:a.title||'',authors:(a.authors||[]).slice(0,4).map(x=>x.name||''),year:(a.pubdate||'').slice(0,4),journal:a.fulljournalname||a.source||'',abstract:'',citations:0,url:`https://pubmed.ncbi.nlm.nih.gov/${id}/`,doi:(a.articleids||[]).find(x=>x.idtype==='doi')?.value||'',source:'PubMed',oa_status:''};}).filter(p=>p.title);}catch(e){log('⚠ PubMed: '+e.message,'warn');return[];}}
+
+async function searchAX(q,max){try{const arxivUrl=`https://export.arxiv.org/api/query?search_query=all:${encodeURIComponent(q.replace(/\s+/g,'+'))}&start=0&max_results=${max}`;const r=await fetch(`https://corsproxy.io/?url=${encodeURIComponent(arxivUrl)}`);if(!r.ok)throw new Error('arXiv '+r.status);const xml=new DOMParser().parseFromString(await r.text(),'application/xml');return Array.from(xml.querySelectorAll('entry')).map(e=>({title:(e.querySelector('title')?.textContent||'').replace(/\s+/g,' ').trim(),authors:Array.from(e.querySelectorAll('author name')).slice(0,4).map(a=>a.textContent),year:(e.querySelector('published')?.textContent||'').slice(0,4),journal:'arXiv',abstract:(e.querySelector('summary')?.textContent||'').slice(0,500).replace(/\s+/g,' '),citations:0,url:e.querySelector('id')?.textContent||'',doi:e.querySelector("link[title='doi']")?.getAttribute('href')||'',source:'arXiv',oa_status:'gold'})).filter(p=>p.title);}catch(e){log('⚠ arXiv: '+e.message,'warn');return[];}}
+
+async function searchOA(q,max){const email=document.getElementById('pubmedEmail')?.value||'doctoralia@app.io';try{const p=new URLSearchParams({search:q,per_page:Math.min(max,200),page:1,select:'id,title,abstract_inverted_index,publication_year,authorships,primary_location,cited_by_count,doi,open_access',mailto:email});const r=await fetch(`https://api.openalex.org/works?${p}`);if(!r.ok)throw new Error('OA '+r.status);return((await r.json()).results||[]).map(w=>{let abstract='';try{if(w.abstract_inverted_index){const pos=[];Object.entries(w.abstract_inverted_index).forEach(([word,positions])=>positions.forEach(p=>pos.push([p,word])));abstract=pos.sort((a,b)=>a[0]-b[0]).map(x=>x[1]).join(' ').slice(0,500);}}catch(e){}return{title:w.title||'',authors:(w.authorships||[]).slice(0,4).map(a=>a.author?.display_name||''),year:String(w.publication_year||''),journal:w.primary_location?.source?.display_name||'',abstract,citations:w.cited_by_count||0,url:w.id||'',doi:(w.doi||'').replace('https://doi.org/',''),source:'OpenAlex',oa_status:w.open_access?.oa_status||''};}).filter(p=>p.title);}catch(e){log('⚠ OpenAlex: '+e.message,'warn');return[];}}
+
+async function searchEPMC(q,max){try{const p=new URLSearchParams({query:q,format:'json',pageSize:Math.min(max,100),resultType:'core',sort:'CITED desc'});const r=await fetch(`https://www.ebi.ac.uk/europepmc/webservices/rest/search?${p}`);if(!r.ok)throw new Error('EPMC '+r.status);return(((await r.json()).resultList||{}).result||[]).map(a=>({title:a.title||'',authors:(a.authorString||'').split(',').slice(0,4).map(s=>s.trim()),year:String(a.pubYear||''),journal:a.journalTitle||'',abstract:(a.abstractText||'').slice(0,500),citations:a.citedByCount||0,url:a.pmid?`https://europepmc.org/article/MED/${a.pmid}`:(a.doi?`https://doi.org/${a.doi}`:''),doi:a.doi||'',source:'Europe PMC',oa_status:a.inEPMC==='Y'?'open':''})).filter(p=>p.title);}catch(e){log('⚠ EuropePMC: '+e.message,'warn');return[];}}
+
+async function searchCR(q,max){const email=document.getElementById('pubmedEmail')?.value||'doctoralia@app.io';try{const p=new URLSearchParams({query:q,rows:Math.min(max,100),select:'DOI,title,author,published,container-title,abstract,is-referenced-by-count,URL',mailto:email});const r=await fetch(`https://api.crossref.org/works?${p}`);if(!r.ok)throw new Error('CR '+r.status);return(((await r.json()).message||{}).items||[]).map(w=>{const year=w.published?.['date-parts']?.[0]?.[0]||'';const doi=w.DOI||'';return{title:(Array.isArray(w.title)?w.title[0]:w.title)||'',authors:(w.author||[]).slice(0,4).map(a=>`${a.family||''} ${(a.given||'')[0]||''}`.trim()),year:String(year),journal:(Array.isArray(w['container-title'])?w['container-title'][0]:w['container-title'])||'',abstract:(w.abstract||'').replace(/<[^>]+>/g,'').slice(0,500),citations:w['is-referenced-by-count']||0,url:doi?`https://doi.org/${doi}`:'',doi,source:'CrossRef',oa_status:''};}).filter(p=>p.title);}catch(e){log('⚠ CrossRef: '+e.message,'warn');return[];}}
+
+function dedup(papers){const seen=new Set();return papers.filter(p=>{const k=p.title.toLowerCase().slice(0,50).replace(/\s+/g,'');if(!k||seen.has(k))return false;seen.add(k);return true;});}
+function sortPapers(papers){const by=document.getElementById('sortPapers')?.value||'citations';if(by==='citations')return papers.sort((a,b)=>(b.citations||0)-(a.citations||0));if(by==='year')return papers.sort((a,b)=>parseInt(b.year||0)-parseInt(a.year||0));return papers.sort((a,b)=>a.source.localeCompare(b.source));}
+function fmt(papers,top=25){return papers.slice(0,top).map((p,i)=>{const a=p.authors.slice(0,3).join(', ')+(p.authors.length>3?' et al.':'');return`[${i+1}] ${p.title}\n    Authors: ${a||'Unknown'} | Year: ${p.year||'?'} | Venue: ${p.journal||'?'} | Citations: ${p.citations}\n    Source: ${p.source} | DOI: ${p.doi||'N/A'}\n    Abstract: ${p.abstract||'(not available)'}\n    URL: ${p.url}`;}).join('\n\n');}
+
+// ═══════════════════════════════════════════════════
+//  AUTOSAVE DRAFT
+// ═══════════════════════════════════════════════════
+function saveDraft(sections,papers,gaps,meta){
+  try{localStorage.setItem('doctoralia_draft',JSON.stringify({sections,papers:papers.slice(0,20),gaps,meta,ts:Date.now(),text:Object.entries(sections).map(([k,v])=>`## ${k}\n\n${v}`).join('\n\n')}));}catch(e){}
+}
+function showDraftBanner(d){
+  const meta=d.meta||{};
+  const banner=document.createElement('div');
+  banner.style.cssText='position:fixed;bottom:20px;right:20px;background:#ffffff;border:1px solid var(--border);box-shadow:var(--shadow);border-radius:var(--rl);padding:14px 18px;z-index:500;max-width:320px;box-shadow:0 8px 24px rgba(0,0,0,.4)';
+  banner.innerHTML=`<div style="font-size:13px;font-weight:500;color:var(--text);margin-bottom:4px">📋 Borrador guardado</div><div style="font-size:12px;color:var(--t2);margin-bottom:10px">${meta.topic||'Revisión anterior'} · ${new Date(d.ts).toLocaleDateString('es')}</div><div style="display:flex;gap:8px"><button class="btn btn-primary" style="font-size:12px;padding:5px 10px" onclick="loadDraft()">Recuperar</button><button class="btn btn-danger" style="font-size:12px;padding:5px 10px" onclick="this.closest('div[style]').remove();localStorage.removeItem('doctoralia_draft')">Descartar</button></div>`;
+  document.body.appendChild(banner);
+}
+function loadDraft(){
+  try{
+    const d=JSON.parse(localStorage.getItem('doctoralia_draft'));
+    if(!d)return;
+    generatedText=d.text||'';
+    sectionTextsStore=d.sections||{};
+    allPapersStore=d.papers||[];
+    gapsStore=d.gaps||'';
+    renderOutputSections(sectionTextsStore,d.papers||[],d.gaps||'',d.meta||{});
+    document.getElementById('partialBadge').style.display='flex';
+    document.getElementById('qualityBar').style.display='flex';
+    document.getElementById('exportRow').style.display='flex';
+    document.getElementById('outputBadge').style.display='';
+    showMain('output');
+    document.querySelector('[style*="position:fixed;bottom"]')?.remove();
+  }catch(e){}
+}
+
+// ═══════════════════════════════════════════════════
+//  HISTORY
+// ═══════════════════════════════════════════════════
+function saveToHistory(topic,wordCount,sections,time){
+  try{
+    let hist=JSON.parse(localStorage.getItem('doctoralia_history')||'[]');
+    hist.unshift({id:Date.now(),topic,wordCount,sections,time,ts:Date.now(),text:generatedText});
+    hist=hist.slice(0,5);
+    localStorage.setItem('doctoralia_history',JSON.stringify(hist));
+  }catch(e){}
+  renderHistory();
+}
+function renderHistory(){
+  const area=document.getElementById('historyList');if(!area)return;
+  try{
+    const hist=JSON.parse(localStorage.getItem('doctoralia_history')||'[]');
+    if(!hist.length){area.innerHTML='<div class="placeholder"><div class="bi">🕓</div><p>Aún no hay revisiones guardadas.</p></div>';return;}
+    area.innerHTML=hist.map((h,i)=>`<div class="hist-card fi">
+      <div class="hist-info">
+        <div class="hist-title">${h.topic||'Sin título'}</div>
+        <div class="hist-meta">${new Date(h.ts).toLocaleDateString('es')} · ${(h.wordCount||0).toLocaleString()} palabras · ${h.sections||0} secciones · ${h.time||'?'}</div>
+      </div>
+      <div class="hist-actions">
+        <button class="btn-ghost" onclick="loadFromHistory(${i})">📂 Cargar</button>
+        <button class="btn-ghost" onclick="downloadHistory(${i})">⬇</button>
+        <button class="btn-ghost" style="color:var(--red)" onclick="deleteHistory(${i})">🗑</button>
+      </div>
+    </div>`).join('');
+  }catch(e){area.innerHTML='<div class="placeholder"><div class="bi">🕓</div><p>Error cargando historial.</p></div>';}
+}
+function loadFromHistory(i){
+  try{const hist=JSON.parse(localStorage.getItem('doctoralia_history')||'[]');const h=hist[i];if(!h)return;generatedText=h.text||'';showMain('output');document.getElementById('outputArea').innerHTML='';const pre=document.createElement('div');pre.className='out-area fi';pre.textContent=h.text||'';document.getElementById('outputArea').appendChild(pre);document.getElementById('exportRow').style.display='flex';}catch(e){}
+}
+function downloadHistory(i){
+  try{const hist=JSON.parse(localStorage.getItem('doctoralia_history')||'[]');const h=hist[i];if(!h)return;generatedText=h.text||'';exportMarkdown();}catch(e){}
+}
+function deleteHistory(i){
+  try{let hist=JSON.parse(localStorage.getItem('doctoralia_history')||'[]');hist.splice(i,1);localStorage.setItem('doctoralia_history',JSON.stringify(hist));renderHistory();}catch(e){}
+}
+function clearHistory(){localStorage.removeItem('doctoralia_history');renderHistory();}
+
+// ═══════════════════════════════════════════════════
+//  RENDER OUTPUT WITH EDITABLE SECTIONS
+// ═══════════════════════════════════════════════════
+function renderOutputSections(sections,papers,gaps,meta){
+  const oa=document.getElementById('outputArea');oa.innerHTML='';
+  const container=document.createElement('div');container.className='fi';
+
+  // Stats
+  const words=Object.values(sections).join(' ').split(/\s+/).length;
+  ['sPapers','sWords','sSecs','sTime','sScore'].forEach((id,i)=>{const el=document.getElementById(id);if(el)el.textContent=[papers.length,words.toLocaleString(),Object.keys(sections).length,meta.time||'—',meta.score||'N/A'][i];});
+  document.getElementById('statsRow').style.display='grid';
+  ['qbPapers','qbSecs','qbTime','qbScore'].forEach((id,i)=>{const el=document.getElementById(id);if(el)el.textContent=[papers.length,Object.keys(sections).length,meta.time||'—',meta.score||'N/A'][i];});
+  document.getElementById('qualityBar').style.display='flex';
+
+  // Build editable sections
+  Object.entries(sections).forEach(([title,content])=>{
+    const block=document.createElement('div');block.className='section-block';
+    block.innerHTML=`
+      <div class="section-header" onclick="toggleSection(this)">
+        <span class="section-title-text">📄 ${title}</span>
+        <div class="section-actions" onclick="event.stopPropagation()">
+          <button class="btn-ghost" onclick="openRegenPanel(this)" title="Reescribir sección">🔄 Reescribir</button>
+          <span style="font-size:12px;color:var(--t3)">${content.split(/\s+/).length} palabras</span>
+          <span style="color:var(--t3);font-size:12px">▼</span>
+        </div>
+      </div>
+      <div class="section-body">
+        <textarea oninput="updateSectionText('${title}',this.value)">${content}</textarea>
+        <div class="regen-panel" id="rp-${title.replace(/\s+/g,'_')}">
+          <div style="font-size:12px;color:var(--amber);margin-bottom:6px">🔄 Reescribir "${title}"</div>
+          <textarea placeholder="Feedback opcional: hazla más corta, añade ejemplos clínicos, enfoca en metodología..."></textarea>
+          <div style="display:flex;gap:8px;margin-top:8px">
+            <button class="btn btn-amber" style="font-size:12px;padding:5px 12px" onclick="regenSection('${title}',this)">Regenerar</button>
+            <button class="btn-ghost" onclick="this.closest('.regen-panel').classList.remove('open')">Cancelar</button>
+          </div>
+        </div>
+      </div>`;
+    container.appendChild(block);
+  });
+
+  // References
+  if(papers.length){
+    const refBlock=document.createElement('div');refBlock.className='section-block';
+    refBlock.innerHTML=`<div class="section-header"><span class="section-title-text">📚 Referencias (${papers.length})</span><span style="font-size:12px;color:var(--t3)">▼</span></div><div class="section-body" style="padding:12px 16px;font-size:12px;color:var(--t2);line-height:1.8">${papers.slice(0,40).map((p,i)=>{const a=p.authors.slice(0,3).join(', ')+(p.authors.length>3?' et al.':'');return`[${i+1}] ${a||'Unknown'}. "${p.title}". ${p.journal||''}${p.year?', '+p.year:''}. ${p.doi?'<a href="https://doi.org/'+p.doi+'" target="_blank" style="color:var(--accent)">DOI</a>':''} ${p.oa_status?'<span style="color:var(--teal);font-size:10px">✅ '+p.oa_status+'</span>':''}<br>`;}).join('')}</div>`;
+    container.appendChild(refBlock);
+  }
+
+  // Gaps inline
+  if(gaps){
+    const gapBlock=document.createElement('div');gapBlock.className='section-block';
+    gapBlock.innerHTML=`<div class="section-header"><span class="section-title-text">🔍 Research Gaps</span><span style="font-size:12px;color:var(--t3)">▼</span></div><div class="section-body"><div style="white-space:pre-wrap;font-size:13px;color:var(--t2);line-height:1.7">${gaps}</div></div>`;
+    container.appendChild(gapBlock);
+  }
+
+  oa.appendChild(container);
+  document.getElementById('outputBadge').style.display='';
+}
+
+function toggleSection(header){const body=header.nextElementSibling;body.style.display=body.style.display==='none'?'':'none';}
+function updateSectionText(title,val){sectionTextsStore[title]=val;rebuildFullText();}
+function rebuildFullText(){generatedText=Object.entries(sectionTextsStore).map(([k,v])=>`## ${k}\n\n${v}`).join('\n\n');}
+function openRegenPanel(btn){const rp=btn.closest('.section-body')?.querySelector('.regen-panel');if(rp)rp.classList.toggle('open');}
+
+async function regenSection(title,btn){
+  const model=getActiveModel();
+  if(!model){alert('Selecciona un modelo Ollama en el panel superior.');return;}
+  const apiKey='local';
+  const rpanel=btn.closest('.regen-panel');
+  const feedback=rpanel.querySelector('textarea').value.trim();
+  const orig=btn.textContent;
+  btn.textContent='⏳...';btn.disabled=true;
+  try{
+    const lang=document.getElementById('lang').value;
+    const newContent=await callAI(apiKey,[
+      {role:'system',content:`You are an Academic Section Writer. Write in ${lang}.`},
+      {role:'user',content:`Rewrite the "${title}" section of a state-of-the-art review.\n${feedback?'User feedback: '+feedback+'\n':''}\nBase on this context:\n${fmt(allPapersStore,15)}\n\nWrite ~${Math.max(400,Math.floor(parseInt(document.getElementById('wc').value)/Object.keys(sectionTextsStore).length))} words. Academic tone. Cite as [Author et al., Year].`}
+    ],getTokens('crafter'),0.7);
+    sectionTextsStore[title]=newContent;
+    // Update textarea
+    const textareas=document.querySelectorAll('.section-header');
+    textareas.forEach(h=>{if(h.querySelector('.section-title-text')?.textContent.includes(title)){const ta=h.nextElementSibling?.querySelector('textarea');if(ta)ta.value=newContent;}});
+    rebuildFullText();
+    rpanel.classList.remove('open');
+    log(`✅ Sección "${title}" regenerada.`,'ok');
+  }catch(e){log('❌ Regenerar: '+e.message,'err');}
+  finally{btn.textContent=orig;btn.disabled=false;}
+}
+
+// ═══════════════════════════════════════════════════
+//  MAIN PIPELINE
+// ═══════════════════════════════════════════════════
+async function startGeneration(){
+  if(isRunning)return;
+  const apiKey='local'; // Ollama no necesita API key
+  const model=getActiveModel();
+  const topic=document.getElementById('topic').value.trim();
+  if(!model){alert('Selecciona un modelo Ollama en el panel superior. Primero pulsa "Probar conexión".');return;}
+  if(!topic){alert('Introduce el tema de la revisión');showMain('wizard');goWizard(1);document.getElementById('topic').focus();return;}
+
+  isRunning=true;tStart=Date.now();logCount=0;
+  shouldStop=false;
+  document.getElementById('btnGen').disabled=true;
+  document.getElementById('btnGen').innerHTML='<span class="pulsing">⏳</span> Generando...';
+  document.getElementById('btnStop').disabled=false;
+  document.getElementById('btnGenWizard').disabled=true;
+  document.getElementById('btnStopWizard').disabled=false;
+  document.getElementById('logPanel').innerHTML='';
+  goWizard(4);showMain('wizard');
+  showHP();buildHPSteps();setHPStep(0);
+  [1,2,3,4,5].forEach(n=>setPhase(n,''));
+
+  const wc=parseInt(document.getElementById('wc').value);
+  const cite=document.getElementById('citeStyle').value;
+  const lang=document.getElementById('lang').value;
+  const kw=document.getElementById('keywords').value.trim();
+  const instruct=document.getElementById('instructions').value.trim();
+  const fastMode=document.getElementById('tog-fast').classList.contains('on');
+  const doGaps=document.getElementById('tog-gaps').classList.contains('on');
+  const doBiblio=document.getElementById('tog-biblio').classList.contains('on');
+  const doThread=document.getElementById('tog-thread').classList.contains('on');
+  const doEnh=document.getElementById('tog-enhancer').classList.contains('on');
+  const doPrisma=document.getElementById('tog-prisma').classList.contains('on');
+  const doSynth=document.getElementById('tog-synth').classList.contains('on');
+  const temp=parseFloat(document.getElementById('temperature').value)||0.7;
+  const maxQ=parseInt(document.getElementById('maxQueries').value)||4;
+  const topP=parseInt(document.getElementById('topPapers').value)||25;
+  const useSS=document.getElementById('chk-ss').checked;
+  const usePM=document.getElementById('chk-pm').checked;
+  const useAX=document.getElementById('chk-ax').checked;
+  const useOA=document.getElementById('chk-oa').checked;
+  const useEP=document.getElementById('chk-ep').checked;
+  const useCR=document.getElementById('chk-cr').checked;
+  const limSS=parseInt(document.getElementById('lim-ss').value)||30;
+  const limPM=parseInt(document.getElementById('lim-pm').value)||20;
+  const limAX=parseInt(document.getElementById('lim-ax').value)||20;
+  const limOA=parseInt(document.getElementById('lim-oa').value)||20;
+  const limEP=parseInt(document.getElementById('lim-ep').value)||20;
+  const limCR=parseInt(document.getElementById('lim-cr').value)||20;
+
+  try{
+    // ── FASE 1: RESEARCH ──────────────────────────
+    setPhase(1,'active');setHPStep(0);
+    log('📚 ── FASE 1: RESEARCH ──────────────────────','info');
+
+    log('🤖 Scout: planificando búsqueda...','info');
+    let plan={research_questions:[],search_terms:[topic+(kw?' '+kw:'')],key_areas:[]};
+    try{
+      const raw=await callAI(apiKey,[{role:'user',content:`Plan a state-of-the-art review on: "${topic}"\nGenerate JSON:\n- research_questions: 4-5 questions\n- search_terms: ${maxQ} specific queries\n- key_areas: 3-5 thematic areas\nJSON only.`}],getTokens('scout'),0.5);
+      plan=JSON.parse(raw.replace(/```json|```/g,'').trim());
+      log(`✅ Scout: ${(plan.key_areas||[]).join(' · ')}`,'ok');
+    }catch(e){log('⚠ Scout JSON fallido, usando query directa.','warn');}
+
+    const queries=(plan.search_terms||[topic]).slice(0,maxQ).map(q=>kw?`${q} ${kw}`:q);
+
+    setHPStep(0);
+    let allPapers=[];
+    for(let qi=0;qi<queries.length;qi++){
+      if(shouldStop)throw new Error('__STOPPED__');
+      const q=queries[qi];
+      log(`🔍 Query ${qi+1}/${queries.length}: "${q.slice(0,50)}"`,'info');
+      if(useSS){const p=await searchSS(q,limSS);log(`  SS: ${p.length}`,'ok');allPapers.push(...p);}
+      if(shouldStop)throw new Error('__STOPPED__');
+      if(usePM){const p=await searchPM(q,limPM);log(`  PubMed: ${p.length}`,'ok');allPapers.push(...p);}
+      if(shouldStop)throw new Error('__STOPPED__');
+      if(useAX){const p=await searchAX(q,limAX);log(`  arXiv: ${p.length}`,'ok');allPapers.push(...p);}
+      if(shouldStop)throw new Error('__STOPPED__');
+      if(useOA){const p=await searchOA(q,limOA);log(`  OpenAlex: ${p.length}`,'ok');allPapers.push(...p);}
+      if(shouldStop)throw new Error('__STOPPED__');
+      if(useEP){const p=await searchEPMC(q,limEP);log(`  EuropePMC: ${p.length}`,'ok');allPapers.push(...p);}
+      if(shouldStop)throw new Error('__STOPPED__');
+      if(useCR){const p=await searchCR(q,limCR);log(`  CrossRef: ${p.length}`,'ok');allPapers.push(...p);}
+    }
+    allPapers=sortPapers(dedup(allPapers));
+    allPapersStore=allPapers;
+    log(`📊 Total deduplicado: ${allPapers.length} papers`,'ok');
+
+    const papersFormatted=fmt(allPapers,topP);
+
+    setHPStep(1);
+    log('🤖 Signal: análisis de relevancia...','info');
+    const signalAnalysis=await callAI(apiKey,[
+      {role:'system',content:'You are a Citation Finder and academic signal analyst.'},
+      {role:'user',content:`Analyze ${allPapers.length} papers.\n\nPAPERS:\n${papersFormatted}\n\n1. TOP 15 most relevant papers\n2. Key venues\n3. Thematic clusters (3-5)\n4. Temporal trends`}
+    ],getTokens('signal'),temp);
+    log('✅ Signal completado.','ok');
+
+    log('🤖 Scribe: revisión base comprehensiva...','info');
+    const mainReview=await callAI(apiKey,[
+      {role:'system',content:`You are a State of the Art Reviewer. Write in ${lang}.`},
+      {role:'user',content:`Write a comprehensive state-of-the-art review on: "${topic}"\n\nBased on:\n${papersFormatted}\n\nCover: 1) Historical evolution 2) Current state 3) Methods 4) Key findings 5) Gaps\nCite as [Author et al., Year].${instruct?'\n\nInstructions: '+instruct:''}`}
+    ],getTokens('scribe'),temp);
+    log(`✅ Scribe: ${mainReview.split(' ').length} palabras.`,'ok');
+
+    let trendAnalysis='';
+    if(doBiblio){
+      log('🤖 DataAnalyst: tendencias bibliométricas...','info');
+      const pd=allPapers.slice(0,50).map(p=>`- ${p.title} (${p.year||'?'}) | ${p.journal||'?'} | Cites: ${p.citations} | ${p.source}`).join('\n');
+      trendAnalysis=await callAI(apiKey,[{role:'system',content:`You are an Academic Trend Analyzer. Write in ${lang}.`},{role:'user',content:`Analyze publication trends:\n${pd}\n\n1. Volume by year 2. Top venues 3. Topic evolution 4. Emerging areas.`}],getTokens('data_analyst'),temp);
+      log('✅ DataAnalyst completado.','ok');
+    }
+
+    let gapsText='';
+    if(doGaps){
+      log('🤖 GapDetector: identificando brechas...','info');
+      const abstracts=allPapers.slice(0,30).map((p,i)=>`[${i+1}] ${p.title} (${p.year||'?'}): ${p.abstract||'(no abstract)'}`).join('\n\n');
+      const rqs=(plan.research_questions||[]).map(q=>`- ${q}`).join('\n')||`- What is the current state of ${topic}?`;
+      gapsText=await callAI(apiKey,[{role:'system',content:`You are a Research Gap Identifier. Write in ${lang}.`},{role:'user',content:`Analyze gaps for: "${topic}"\n\nRESEARCH QUESTIONS:\n${rqs}\n\nABSTRACTS:\n${abstracts}\n\nFor each gap:\nGAP [N]: [title]\nStatus: Unanswered / Partially answered\nEvidence: [what exists and why it falls short]\nRecommended study: [type needed]\n\n4-6 specific gaps.`}],getTokens('gap_detector'),temp);
+      gapsStore=gapsText;
+      log('✅ GapDetector completado.','ok');
+    }
+
+    setPhase(1,'done');setPhase(2,'active');
+
+    // ── FASE 2: STRUCTURE ─────────────────────────
+    setHPStep(2);
+    log('🏗️ ── FASE 2: STRUCTURE ──────────────────────','info');
+    let structure={"Introduction":800,"Background":1200,"Current State of the Art":2000,"Methodological Approaches":1500,"Key Findings":1200,"Research Gaps and Future Directions":700,"Discussion":600,"Conclusion":500};
+    try{
+      const sr=await callAI(apiKey,[{role:'user',content:`Design sections for review on: "${topic}"\n~${wc} words. In ${lang}.\n${instruct?'Instructions: '+instruct+'\n':''}\nReturn JSON: keys=section titles, values=word counts. 6-8 sections. Sum≈${wc}.\nJSON only.`}],getTokens('architect'),0.5);
+      const parsed=JSON.parse(sr.replace(/```json|```/g,'').trim());
+      if(typeof parsed==='object'&&Object.keys(parsed).length>3)structure=parsed;
+      log(`✅ Architect: ${Object.keys(structure).join(' → ')}`,'ok');
+    }catch(e){log('⚠ Usando estructura por defecto.','warn');}
+
+    setPhase(2,'done');setPhase(3,'active');
+
+    // ── FASE 3: WRITING ───────────────────────────
+    setHPStep(3);
+    log('✍️ ── FASE 3: WRITING ─────────────────────────','info');
+    const sections=Object.keys(structure);
+    const sectionTexts={};let prevContent='';
+
+    for(let i=0;i<sections.length;i++){
+      const sec=sections[i];const tgt=structure[sec];
+      log(`✍️ Crafter: "${sec}" (~${tgt} palabras)...`,'info');
+      const text=await callAI(apiKey,[
+        {role:'system',content:`You are an Academic Section Writer. Write in ${lang}. Style: ${cite}.`},
+        {role:'user',content:`Write the "${sec}" section.\nTopic: ${topic}\nTarget: ~${tgt} words\n${instruct?'Instructions: '+instruct+'\n':''}\nGaps:\n${gapsText?gapsText.slice(0,600):'N/A'}\n\nBase on:\n${mainReview}\n\nContext:\n${signalAnalysis}\n\nCite as [Author et al., Year].`}
+      ],getTokens('crafter'),temp);
+
+      if(doThread&&prevContent&&i>0){await callAI(apiKey,[{role:'user',content:`Check coherence:\nPREV (last 400):\n${prevContent.slice(-400)}\nCURR (first 400):\n${text.slice(0,400)}\nNote issues briefly.`}],getTokens('thread'),0.3);}
+
+      let finalText=text;
+      try{finalText=await callAI(apiKey,[{role:'system',content:`You are a Voice Refiner. Write in ${lang}.`},{role:'user',content:`Refine academic voice:\n\n${text}\n\nImprove: 1) formal register 2) sentence variety 3) transitions 4) remove redundancies.\nPreserve citations. Return text only.`}],getTokens('narrator'),temp);}catch(e){}
+
+      sectionTexts[sec]=finalText;prevContent=finalText;
+      log(`✅ "${sec}": ${finalText.split(' ').length} palabras`,'ok');
+      // Autosave after each section
+      saveDraft(sectionTexts,allPapers,gapsText,{topic,time:Math.round((Date.now()-tStart)/1000)+'s'});
+    }
+    sectionTextsStore={...sectionTexts};
+    setPhase(3,'done');
+
+    // ── FASE 4: VALIDATION ────────────────────────
+    let qs='N/A';
+    if(!fastMode){
+      setPhase(4,'active');setHPStep(4);
+      log('🔍 ── FASE 4: VALIDATION ─────────────────────','info');
+      const refs=allPapers.slice(0,30).map((p,i)=>{const a=p.authors.slice(0,3).join(', ')+(p.authors.length>3?' et al.':'');return`[${i+1}] ${a}. "${p.title}". ${p.journal||''}, ${p.year||''}.`;}).join('\n');
+      const fullText=Object.values(sectionTexts).join('\n\n');
+      const chunks=[];for(let i=0;i<fullText.length;i+=5000)chunks.push(fullText.slice(i,i+5000));
+      for(let i=0;i<Math.min(chunks.length,3);i++){
+        await callAI(apiKey,[{role:'user',content:`Flag unsupported claims:\n\n${chunks[i]}\n\n1) Strong claims without citation 2) Overgeneralizations. Be brief.`}],getTokens('skeptic'),0.3);
+        await callAI(apiKey,[{role:'user',content:`Validate citations:\n\n${chunks[i]}\n\nRefs:\n${refs}\n\nCheck: text-ref match, consistency.`}],getTokens('verifier'),0.3);
+      }
+      const scores=[];
+      for(const[sec,txt]of Object.entries(sectionTexts)){
+        const rev=await callAI(apiKey,[{role:'user',content:`Peer review:\n\n${txt.slice(0,2000)}\n\nScore 1-5: RIGOR, COVERAGE, CLARITY, ORIGINALITY, RELEVANCE.\nEnd with: OVERALL: X/5`}],getTokens('referee'),0.3);
+        const m=rev.match(/OVERALL[:\s]+(\d+(?:\.\d+)?)\s*\/\s*5/i);if(m)scores.push(parseFloat(m[1]));
+      }
+      if(scores.length){const avg=scores.reduce((a,b)=>a+b,0)/scores.length;qs=`${Math.round(avg/5*100)}/100 (avg ${avg.toFixed(1)}/5)`;log(`📊 Quality Score: ${qs}`,'ok');}
+      setPhase(4,'done');
+    }
+    qualityScore=qs;
+
+    // ── FASE 5: POLISH ────────────────────────────
+    let abstract='',keywords='',highlights='';
+    if(!fastMode){
+      setPhase(5,'active');setHPStep(5);
+      log('✨ ── FASE 5: POLISH ──────────────────────────','info');
+      for(const sec of Object.keys(sectionTexts)){
+        try{sectionTexts[sec]=await callAI(apiKey,[{role:'system',content:`You are a Final Editor. Write in ${lang}.`},{role:'user',content:`Final edit:\n\n${sectionTexts[sec]}\n\nFix grammar, terminology, awkward phrasing. Return text only.`}],getTokens('polish'),temp);}catch(e){}
+      }
+      if(doEnh){
+        log('🤖 Enhancer: abstract + keywords + highlights...','info');
+        const enhRaw=await callAI(apiKey,[{role:'system',content:`You are a Publication Enhancer. Write in ${lang}.`},{role:'user',content:`Generate:\n\n${Object.values(sectionTexts).join('\n\n').slice(0,6000)}\n\nABSTRACT (250 words): Background/Methods/Results/Conclusions\nKEYWORDS: 6-8 separated by semicolons\nHIGHLIGHTS: 5 bullets max 85 chars each\n\nUse exact labels: ABSTRACT:, KEYWORDS:, HIGHLIGHTS:`}],getTokens('enhancer'),temp);
+        const absM=enhRaw.match(/ABSTRACT:([\s\S]*?)(?=KEYWORDS:|$)/i);
+        const kwM=enhRaw.match(/KEYWORDS:([\s\S]*?)(?=HIGHLIGHTS:|$)/i);
+        const hlM=enhRaw.match(/HIGHLIGHTS:([\s\S]*?)$/i);
+        abstract=absM?absM[1].trim():'';keywords=kwM?kwM[1].trim():'';highlights=hlM?hlM[1].trim():'';
+      }
+      setPhase(5,'done');
+    }
+
+    // Auxiliares
+    let prismaText='';
+    if(doPrisma){
+      const srcList=[useSS?'Semantic Scholar':'',usePM?'PubMed':'',useAX?'arXiv':'',useOA?'OpenAlex':'',useEP?'Europe PMC':'',useCR?'CrossRef':''].filter(Boolean).join(', ');
+      prismaText=await callAI(apiKey,[{role:'system',content:`You are a Methodology Designer. Write in ${lang}.`},{role:'user',content:`Write METHODOLOGY section (PRISMA).\n\nSources: ${srcList}\nSearch terms: ${queries.join('; ')}\nPeriod: last ${document.getElementById('years').value} years\nTotal papers: ${allPapers.length}\n\nCover: search strategy, inclusion/exclusion, screening, quality assessment. ~400 words.`}],getTokens('methodology'),temp);
+    }
+    let synthText='';
+    if(doSynth){synthText=await callAI(apiKey,[{role:'system',content:`You are a Findings Synthesizer. Write in ${lang}.`},{role:'user',content:`Synthesize:\n\n${Object.values(sectionTexts).join('\n\n').slice(0,5000)}\n\n5-7 bullets: significant findings, consensus, gaps, implications. Max 2 sentences each.`}],getTokens('results_synthesizer'),temp);}
+
+    // Build display sections (add aux sections)
+    const displaySections={...sectionTexts};
+    if(abstract)displaySections['Abstract']=abstract+(keywords?'\n\n**Keywords:** '+keywords:'')+(highlights?'\n\n**Highlights:**\n'+highlights:'');
+    if(synthText)displaySections['Executive Summary']=synthText;
+    if(prismaText)displaySections['Methodology (PRISMA)']=prismaText;
+    if(trendAnalysis)displaySections['Bibliometric Analysis']=trendAnalysis;
+
+    // Assemble full text for download
+    const elapsed=Math.round((Date.now()-tStart)/1000);
+    const srcList2=[useSS?'Semantic Scholar':'',usePM?'PubMed':'',useAX?'arXiv':'',useOA?'OpenAlex':'',useEP?'Europe PMC':'',useCR?'CrossRef':''].filter(Boolean).join(', ');
+    let full=`# ${topic}\n## State-of-the-Art Review\n\n`;
+    full+=`*Doctoralia Local · ${new Date().toLocaleDateString('es')} · ${getActiveModel()} · ${cite}*\n`;
+    full+=`*Fuentes: ${srcList2} · Papers: ${allPapers.length} · Tiempo: ${elapsed}s · Score: ${qs}*\n\n---\n\n`;
+    Object.entries(displaySections).forEach(([sec,txt])=>{full+=`## ${sec}\n\n${txt}\n\n`;});
+    full+=`---\n\n## References\n\n`;
+    allPapers.slice(0,40).forEach((p,i)=>{const a=p.authors.slice(0,3).join(', ')+(p.authors.length>3?' et al.':'');full+=`[${i+1}] ${a||'Unknown'}. "${p.title}". ${p.journal||''}${p.year?', '+p.year:''}. ${p.doi?'DOI: https://doi.org/'+p.doi:p.url||''} ${p.oa_status?'[OA: '+p.oa_status+']':''}\n`;});
+    full+=`\n---\n\n## Appendix: Paper Database (${allPapers.length} papers)\n\n`;
+    full+=`| # | Title | Authors | Year | Source | Cites | OA | URL |\n|---|-------|---------|------|--------|-------|----|-----|\n`;
+    allPapers.forEach((p,i)=>{const a=p.authors.slice(0,2).join(', ')+(p.authors.length>2?'...':'');const u=p.url?`[link](${p.url})`:'—';full+=`| ${i+1} | ${p.title.slice(0,50).replace(/\|/g,'/')} | ${a||'—'} | ${p.year||'—'} | ${p.source} | ${p.citations} | ${p.oa_status||'—'} | ${u} |\n`;});
+    generatedText=full;
+    sectionTextsStore={...displaySections};
+
+    // ── UPDATE UI ─────────────────────────────────
+    setHPStep(6);
+    const words=Object.values(displaySections).join(' ').split(/\s+/).length;
+    log(`🎉 ¡Completado en ${elapsed}s! ${allPapers.length} papers · ${sections.length} secciones · Score: ${qs}`,'ok');
+
+    renderOutputSections(displaySections,allPapers,gapsText,{time:elapsed+'s',score:qs});
+    document.getElementById('exportRow').style.display='flex';
+
+    // Gaps tab
+    if(gapsText){
+      const ga=document.getElementById('gapsArea');ga.innerHTML='';
+      const gl=document.createElement('div');gl.className='gaps-list fi';
+      gapsText.split(/\nGAP \[?\d+\]?:/i).filter(Boolean).forEach((g,i)=>{const lines=g.trim().split('\n');const card=document.createElement('div');card.className='gap-card';card.innerHTML=`<h4>GAP ${i+1}: ${lines[0].replace(/^[:.\s]+/,'').trim()}</h4><p>${lines.slice(1).join('<br>').trim()}</p>`;gl.appendChild(card);});
+      ga.appendChild(gl);
+    }
+
+    // Save to history
+    saveToHistory(topic,words,sections.length,elapsed+'s');
+    localStorage.removeItem('doctoralia_draft');
+
+    showMain('output');
+    document.getElementById('outputBadge').style.display='';
+
+  }catch(e){
+    if(e.message==='__STOPPED__'){
+      log('⏹ Generación detenida por el usuario.','warn');
+    } else {
+      log('❌ Error: '+e.message,'err');
+      if(e.message.includes('Failed to fetch')||e.message.includes('NetworkError'))log('💡 No se puede conectar a Ollama. ¿Está corriendo? Ejecuta: ollama serve','warn');
+      else if(e.message.includes('model'))log('💡 Modelo no encontrado. Ejecuta: ollama pull '+getActiveModel(),'warn');
+    }
+    // Show partial draft if something was generated
+    if(Object.keys(sectionTextsStore).length>0){
+      log('💾 Guardando borrador parcial...','warn');
+      renderOutputSections(sectionTextsStore,allPapersStore,gapsStore,{time:Math.round((Date.now()-tStart)/1000)+'s',score:'N/A'});
+      document.getElementById('partialBadge').style.display='flex';
+      document.getElementById('exportRow').style.display='flex';
+      document.getElementById('outputBadge').style.display='';
+    }
+  }finally{
+    isRunning=false;
+    shouldStop=false;
+    document.getElementById('btnGen').disabled=false;document.getElementById('btnGen').innerHTML='▶ Generar';
+    document.getElementById('btnStop').disabled=true;
+    document.getElementById('btnGenWizard').disabled=false;document.getElementById('btnGenWizard').innerHTML='▶ Generar revisión';
+    document.getElementById('btnStopWizard').disabled=true;
+  }
+}
+
+// ═══════════════════════════════════════════════════
+//  EXPORT
+// ═══════════════════════════════════════════════════
+function slug(){return(document.getElementById('topic').value||'review').replace(/\s+/g,'_').slice(0,40);}
+function exportMarkdown(){if(!generatedText)return;dl(`doctoralia_${slug()}.md`,generatedText,'text/markdown');log('⬇ Markdown descargado.','ok');}
+function exportTxt(){if(!generatedText)return;dl(`doctoralia_${slug()}.txt`,generatedText,'text/plain');log('⬇ Texto descargado.','ok');}
+
+function exportWord(){
+  if(!generatedText)return;
+  const date=new Date().toLocaleDateString('es');
+  let html=generatedText.replace(/^# (.+)$/mg,'<h1>$1</h1>').replace(/^## (.+)$/mg,'<h2>$1</h2>').replace(/^### (.+)$/mg,'<h3>$1</h3>').replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/\*(.+?)\*/g,'<em>$1</em>').replace(/\[(.+?)\]\((.+?)\)/g,'<a href="$2">$1</a>').replace(/^---$/mg,'<hr>').replace(/^\| .+$/mg,'').replace(/^- (.+)$/mg,'<li>$1</li>').split('\n\n').map(p=>p.startsWith('<')?p:`<p>${p}</p>`).join('\n');
+  const doc=`<!DOCTYPE html><html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"><!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View></w:WordDocument></xml><![endif]--><style>@page{margin:2.5cm 3cm}body{font-family:"Times New Roman",serif;font-size:12pt;line-height:1.6}h1{font-size:18pt;text-align:center;color:#1a3a5c}h2{font-size:14pt;color:#1a3a5c;border-bottom:1pt solid #ccc;margin-top:18pt}p{text-align:justify;margin:6pt 0}.meta{font-size:10pt;color:#666;text-align:center;font-style:italic}</style></head><body><p class="meta">Doctoralia · ${date} · Papers: ${allPapersStore.length}</p>${html}</body></html>`;
+  dl(`doctoralia_${slug()}.doc`,doc,'application/msword');
+  log('⬇ Word descargado. Abre con Microsoft Word o LibreOffice.','ok');
+}
+
+function exportLatex(){
+  if(!generatedText)return;
+  const date=new Date().toISOString().slice(0,10);
+  const esc=t=>(t||'').replace(/\\/g,'\\textbackslash{}').replace(/&/g,'\\&').replace(/%/g,'\\%').replace(/\$/g,'\\$').replace(/#/g,'\\#').replace(/_/g,'\\_').replace(/\{/g,'\\{').replace(/\}/g,'\\}').replace(/~/g,'\\textasciitilde{}').replace(/\^/g,'\\textasciicircum{}');
+  let body='',titleSet=false;
+  for(const line of generatedText.split('\n')){
+    if(line.startsWith('# ')&&!titleSet){body+=`\\title{${esc(line.slice(2))}}\n\\maketitle\n\n`;titleSet=true;}
+    else if(line.startsWith('## ')){body+=`\n\\section{${esc(line.slice(3))}}\n`;}
+    else if(line.startsWith('### ')){body+=`\n\\subsection{${esc(line.slice(4))}}\n`;}
+    else if(line.startsWith('**Keywords:**')){body+=`\\noindent\\textbf{Keywords:} ${esc(line.replace('**Keywords:**','').trim())}\n\n`;}
+    else if(line.startsWith('- ')){body+=`\\begin{itemize}\\item ${esc(line.slice(2))}\\end{itemize}\n`;}
+    else if(line.match(/^\[\d+\] /)){body+=`\\noindent${esc(line)}\n\n`;}
+    else if(line==='---'){body+=`\n\\vspace{6mm}\\hrule\\vspace{6mm}\n`;}
+    else if(line.match(/^\*/)){/* skip meta */}
+    else if(line.trim()){body+=esc(line)+'\n\n';}
+  }
+  const latex=`% Doctoralia · ${date}\n\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[T1]{fontenc}\n\\usepackage{hyperref}\n\\usepackage{geometry}\n\\usepackage{times}\n\\geometry{margin=2.5cm}\n\\hypersetup{colorlinks=true,linkcolor=blue,urlcolor=blue}\n\\author{Doctoralia Review Generator}\n\\date{${date}}\n\\begin{document}\n\n${body}\n\n\\end{document}\n`;
+  dl(`doctoralia_${slug()}.tex`,latex,'text/plain');
+  log('⬇ LaTeX descargado. Compila con pdflatex o en overleaf.com.','ok');
+}
+
+// ═══════════════════════════════════════════════════
+//  SETUP PANEL — HARDWARE DETECTION & GUIDED INSTALL
+// ═══════════════════════════════════════════════════
+
+// Catálogo completo con metadatos para scoring
+const MODEL_CATALOG=[
+  {id:'llama3.2:1b',    name:'Llama 3.2 1B',   family:'Llama',    org:'Meta',    size_gb:0.8,  ram_min:4,  vram_opt:0,  ctx:128000, tok_s_cpu:25, tok_s_gpu:80,  tags:['⚡ Ultra rápido'],           desc:'El más ligero. Perfecto para explorar o hardware muy limitado.',       ollama:'llama3.2:1b'},
+  {id:'llama3.2',       name:'Llama 3.2 3B',   family:'Llama',    org:'Meta',    size_gb:2.0,  ram_min:4,  vram_opt:4,  ctx:128000, tok_s_cpu:15, tok_s_gpu:60,  tags:['🏎️ Rápido','💡 Recomendado'],desc:'Excelente equilibrio para hardware básico.',                            ollama:'llama3.2'},
+  {id:'llama3.1',       name:'Llama 3.1 8B',   family:'Llama',    org:'Meta',    size_gb:4.7,  ram_min:8,  vram_opt:8,  ctx:128000, tok_s_cpu:8,  tok_s_gpu:40,  tags:['⭐ Popular'],                 desc:'El modelo más popular de Meta. Buena calidad general.',                 ollama:'llama3.1'},
+  {id:'mistral',        name:'Mistral 7B',      family:'Mistral',  org:'Mistral', size_gb:4.1,  ram_min:8,  vram_opt:8,  ctx:32000,  tok_s_cpu:9,  tok_s_gpu:45,  tags:['📝 Escritura'],               desc:'Muy buena escritura académica y razonamiento.',                         ollama:'mistral'},
+  {id:'mistral-nemo',   name:'Mistral Nemo 12B',family:'Mistral',  org:'Mistral', size_gb:7.1,  ram_min:12, vram_opt:12, ctx:128000, tok_s_cpu:5,  tok_s_gpu:28,  tags:['📝 Textos largos'],            desc:'Ideal para revisiones largas. Contexto extendido.',                     ollama:'mistral-nemo'},
+  {id:'qwen2.5',        name:'Qwen 2.5 7B',    family:'Qwen',     org:'Alibaba', size_gb:4.7,  ram_min:8,  vram_opt:8,  ctx:128000, tok_s_cpu:8,  tok_s_gpu:42,  tags:['🌏 Multilingüe'],             desc:'Excelente en español y otros idiomas. Muy recomendado.',                ollama:'qwen2.5'},
+  {id:'qwen2.5:14b',    name:'Qwen 2.5 14B',   family:'Qwen',     org:'Alibaba', size_gb:9.0,  ram_min:16, vram_opt:12, ctx:128000, tok_s_cpu:4,  tok_s_gpu:22,  tags:['🌏 Multilingüe','⭐ Popular'], desc:'Calidad alta en español. Recomendado para revisiones académicas.',      ollama:'qwen2.5:14b'},
+  {id:'qwen2.5:32b',    name:'Qwen 2.5 32B',   family:'Qwen',     org:'Alibaba', size_gb:20,   ram_min:32, vram_opt:24, ctx:128000, tok_s_cpu:2,  tok_s_gpu:12,  tags:['🏆 Alta calidad'],             desc:'Alta calidad. Necesita hardware potente.',                              ollama:'qwen2.5:32b'},
+  {id:'phi4',           name:'Phi-4 14B',       family:'Phi',      org:'Microsoft',size_gb:9.1, ram_min:16, vram_opt:12, ctx:16000,  tok_s_cpu:4,  tok_s_gpu:20,  tags:['🔬 Científico'],              desc:'Especializado en razonamiento y ciencia. De Microsoft.',                ollama:'phi4'},
+  {id:'phi3.5',         name:'Phi-3.5 Mini',    family:'Phi',      org:'Microsoft',size_gb:2.2, ram_min:4,  vram_opt:4,  ctx:128000, tok_s_cpu:12, tok_s_gpu:55,  tags:['🏎️ Rápido','🔬 Científico'],  desc:'Pequeño y sorprendentemente bueno para su tamaño.',                    ollama:'phi3.5'},
+  {id:'gemma2',         name:'Gemma 2 9B',      family:'Gemma',    org:'Google',  size_gb:5.5,  ram_min:10, vram_opt:8,  ctx:8000,   tok_s_cpu:6,  tok_s_gpu:30,  tags:['⭐ Popular'],                 desc:'De Google. Muy sólido en texto académico.',                             ollama:'gemma2'},
+  {id:'gemma2:27b',     name:'Gemma 2 27B',     family:'Gemma',    org:'Google',  size_gb:16,   ram_min:24, vram_opt:16, ctx:8000,   tok_s_cpu:2,  tok_s_gpu:10,  tags:['🏆 Alta calidad'],             desc:'Alta calidad. Requiere bastante RAM.',                                  ollama:'gemma2:27b'},
+  {id:'deepseek-r1',    name:'DeepSeek-R1 7B',  family:'DeepSeek', org:'DeepSeek',size_gb:4.7,  ram_min:8,  vram_opt:8,  ctx:32000,  tok_s_cpu:7,  tok_s_gpu:35,  tags:['🧠 Razonamiento'],             desc:'Piensa paso a paso. Excelente para análisis complejos.',                ollama:'deepseek-r1'},
+  {id:'deepseek-r1:14b',name:'DeepSeek-R1 14B', family:'DeepSeek', org:'DeepSeek',size_gb:9.0,  ram_min:16, vram_opt:12, ctx:32000,  tok_s_cpu:3,  tok_s_gpu:18,  tags:['🧠 Razonamiento','⭐ Popular'],desc:'Razonamiento profundo. Muy bueno para revisiones críticas.',            ollama:'deepseek-r1:14b'},
+  {id:'deepseek-r1:32b',name:'DeepSeek-R1 32B', family:'DeepSeek', org:'DeepSeek',size_gb:20,   ram_min:32, vram_opt:24, ctx:32000,  tok_s_cpu:1,  tok_s_gpu:8,   tags:['🧠 Razonamiento','🏆 Alta calidad'],desc:'Máxima calidad de razonamiento.',                              ollama:'deepseek-r1:32b'},
+];
+
+let hwDetected={ram:0,vram:0,platform:'generic',gpuName:'',isApple:false};
+let selectedModelId=null;
+
+// ── HARDWARE DETECTION ───────────────────────────
+async function detectHardware(){
+  const spinner=document.getElementById('hwSpinner');
+  const icon=document.getElementById('hwStatusIcon');
+  const title=document.getElementById('hwStatusTitle');
+  const sub=document.getElementById('hwStatusSub');
+  const btn=document.getElementById('btnDetectHW');
+
+  spinner.style.display='block';
+  spinner.classList.add('spinning');
+  icon.style.display='none';
+  title.textContent='Analizando tu hardware...';
+  sub.textContent='Consultando WebGPU, WebGL y Navigator APIs...';
+  btn.disabled=true;
+
+  let ram=0, vram=0, gpuName='', isApple=false, platform='generic';
+
+  // 1. RAM via deviceMemory (aproximado, en GB)
+  if(navigator.deviceMemory){
+    ram=navigator.deviceMemory;
+    // deviceMemory está limitado a 8 por privacidad — corregimos hacia arriba si hay señales
+    if(ram>=8) ram=Math.max(ram,16); // heurístico conservador
+  }
+
+  // 2. GPU via WebGL
+  try{
+    const canvas=document.createElement('canvas');
+    const gl=canvas.getContext('webgl')||canvas.getContext('experimental-webgl');
+    if(gl){
+      const ext=gl.getExtension('WEBGL_debug_renderer_info');
+      if(ext){
+        const renderer=gl.getParameter(ext.UNMASKED_RENDERER_WEBGL)||'';
+        const vendor=gl.getParameter(ext.UNMASKED_VENDOR_WEBGL)||'';
+        gpuName=renderer;
+
+        // Detectar Apple Silicon
+        if(/apple/i.test(vendor)||/apple m[1-9]/i.test(renderer)||/metal/i.test(renderer)){
+          isApple=true;platform='apple';
+          // En Apple Silicon RAM unificada — estimamos VRAM = 60% de RAM detectada
+          if(!ram)ram=8;
+          vram=Math.round(ram*0.6);
+        }
+        // Detectar VRAM por nombre de tarjeta NVIDIA
+        else if(/nvidia|geforce|rtx|gtx/i.test(renderer)){
+          platform='generic';
+          const vramMap={
+            'RTX 4090':24,'RTX 4080':16,'RTX 4070 Ti':12,'RTX 4070':12,
+            'RTX 4060 Ti':16,'RTX 4060':8,'RTX 3090':24,'RTX 3080 Ti':12,
+            'RTX 3080':10,'RTX 3070 Ti':8,'RTX 3070':8,'RTX 3060 Ti':8,
+            'RTX 3060':12,'RTX 2080 Ti':11,'RTX 2080':8,'RTX 2070':8,
+            'RTX 2060':6,'GTX 1080 Ti':11,'GTX 1080':8,'GTX 1070':8,
+            'GTX 1060':6,'GTX 1050 Ti':4,'GTX 1650':4,'GTX 1660':6,
+          };
+          for(const[key,v] of Object.entries(vramMap)){
+            if(renderer.toUpperCase().includes(key)){vram=v;break;}
+          }
+          if(!vram){
+            // Estimación por serie si no tenemos match exacto
+            if(/RTX 40/i.test(renderer))vram=12;
+            else if(/RTX 30/i.test(renderer))vram=8;
+            else if(/RTX 20/i.test(renderer))vram=8;
+            else if(/GTX 16/i.test(renderer))vram=6;
+            else if(/GTX 10/i.test(renderer))vram=6;
+            else vram=4;
+          }
+        }
+        // AMD
+        else if(/amd|radeon|rx [0-9]/i.test(renderer)){
+          platform='generic';
+          if(/RX 7900/i.test(renderer))vram=24;
+          else if(/RX 7800|RX 6900|RX 6800/i.test(renderer))vram=16;
+          else if(/RX 7700|RX 6700/i.test(renderer))vram=12;
+          else if(/RX 7600|RX 6600/i.test(renderer))vram=8;
+          else if(/RX 6500|RX 580|RX 570/i.test(renderer))vram=8;
+          else vram=6;
+        }
+        // Intel Arc / integrada
+        else if(/intel/i.test(renderer)||/intel/i.test(vendor)){
+          platform='laptop';
+          if(/arc a7/i.test(renderer))vram=16;
+          else if(/arc a5/i.test(renderer))vram=8;
+          else{
+            platform='laptop';
+            vram=0; // integrada usa RAM del sistema
+          }
+        }
+      }
+    }
+  }catch(e){}
+
+  // 3. WebGPU (más preciso si disponible)
+  try{
+    if(navigator.gpu){
+      const adapter=await navigator.gpu.requestAdapter();
+      if(adapter){
+        const info=await adapter.requestAdapterInfo();
+        if(info.description) gpuName=gpuName||info.description;
+      }
+    }
+  }catch(e){}
+
+  // 4. RAM mejorada via hardwareConcurrency como proxy de tier
+  if(!ram){
+    const cores=navigator.hardwareConcurrency||4;
+    if(cores>=16)ram=32;
+    else if(cores>=12)ram=16;
+    else if(cores>=8)ram=16;
+    else if(cores>=4)ram=8;
+    else ram=4;
+  }
+
+  hwDetected={ram,vram,gpuName,isApple,platform};
+
+  spinner.style.display='none';
+  spinner.classList.remove('spinning');
+  icon.style.display='block';
+
+  if(ram>0||gpuName){
+    icon.textContent='✅';
+    title.textContent='Hardware detectado';
+    sub.textContent=gpuName||'GPU no identificada con precisión — revisa los valores abajo';
+    showHWResult(ram,vram,gpuName,isApple,platform);
+  }else{
+    icon.textContent='⚠️';
+    title.textContent='Detección parcial — introduce tus specs manualmente';
+    sub.textContent='Algunos navegadores limitan el acceso al hardware';
+    document.getElementById('hwManualForm').style.display='block';
+    document.getElementById('manualArrow').textContent='▼';
+  }
+  btn.disabled=false;
+  btn.textContent='🔄 Volver a detectar';
+  renderCompatibleModels(ram,vram,isApple);
+}
+
+function showHWResult(ram,vram,gpuName,isApple,platform){
+  const box=document.getElementById('hwResult');
+  const cards=document.getElementById('hwCards');
+  const effectiveMem=isApple?ram:(vram||ram);
+  const tier=effectiveMem>=24?'Alto':effectiveMem>=12?'Medio':effectiveMem>=8?'Normal':'Básico';
+  const tierColor=effectiveMem>=24?'var(--teal)':effectiveMem>=12?'var(--accent)':effectiveMem>=8?'var(--amber)':'var(--red)';
+
+  cards.innerHTML=`
+    <div class="hw-card">
+      <div class="hw-card-label">RAM Sistema</div>
+      <div class="hw-card-val">${ram||'?'} GB</div>
+      <div class="hw-card-sub">${isApple?'Memoria unificada (CPU+GPU)':'RAM del sistema'}</div>
+    </div>
+    <div class="hw-card">
+      <div class="hw-card-label">${isApple?'GPU Unificada':'VRAM GPU'}</div>
+      <div class="hw-card-val">${vram?vram+' GB':'CPU only'}</div>
+      <div class="hw-card-sub">${gpuName?gpuName.slice(0,40):isApple?'Apple Silicon':'Sin GPU dedicada'}</div>
+    </div>
+    <div class="hw-card" style="border-color:${tierColor};background:${effectiveMem>=12?'#f0fdf4':'#fffbeb'}">
+      <div class="hw-card-label">Potencia IA</div>
+      <div class="hw-card-val" style="color:${tierColor}">${tier}</div>
+      <div class="hw-card-sub">~${vram||Math.round(ram*0.5)} GB disponibles para el modelo</div>
+    </div>`;
+  box.style.display='block';
+}
+
+function toggleManualHW(){
+  const f=document.getElementById('hwManualForm');
+  const a=document.getElementById('manualArrow');
+  const open=f.style.display==='none';
+  f.style.display=open?'block':'none';
+  a.textContent=open?'▼':'▶';
+}
+
+function applyManualHW(){
+  const ram=parseInt(document.getElementById('manualRam').value)||16;
+  const vram=parseInt(document.getElementById('manualVram').value)||0;
+  const platform=document.getElementById('manualPlatform').value;
+  const isApple=platform==='apple';
+  hwDetected={ram,vram,gpuName:'Manual',isApple,platform};
+  document.getElementById('hwStatusIcon').textContent='✅';
+  document.getElementById('hwStatusTitle').textContent='Specs aplicadas manualmente';
+  document.getElementById('hwStatusSub').textContent=`RAM: ${ram}GB · VRAM: ${vram}GB · ${platform}`;
+  showHWResult(ram,vram,'Configuración manual',isApple,platform);
+  renderCompatibleModels(ram,vram,isApple);
+}
+
+// ── MODEL COMPATIBILITY SCORING ──────────────────
+function scoreModel(m,ram,vram,isApple){
+  const effectiveMem=isApple?ram:Math.max(vram,ram*0.5);
+  const memForModel=isApple?ram*0.75:(vram>0?vram:ram*0.6);
+  const fits=memForModel>=m.size_gb*1.1;
+  const comfort=memForModel/(m.size_gb*1.2);
+
+  if(!fits||ram<m.ram_min)return{grade:'F',label:'No ejecutable',color:'#dc2626',bg:'#fee2e2',score:0};
+  if(comfort>=2.0) return{grade:'S',label:'Corre genial',  color:'#15803d',bg:'#dcfce7',score:100};
+  if(comfort>=1.4) return{grade:'A',label:'Corre bien',    color:'#1d4ed8',bg:'#dbeafe',score:80};
+  if(comfort>=1.1) return{grade:'B',label:'Corre OK',      color:'#a16207',bg:'#fef9c3',score:60};
+  if(comfort>=0.9) return{grade:'C',label:'Ajustado',      color:'#c2410c',bg:'#ffedd5',score:40};
+  return             {grade:'D',label:'Muy justo',          color:'#b91c1c',bg:'#fee2e2',score:20};
+}
+
+function renderCompatibleModels(ram,vram,isApple){
+  const box=document.getElementById('modelsList');
+  const placeholder=document.getElementById('modelsPlaceholder');
+
+  const scored=MODEL_CATALOG
+    .map(m=>({...m,scoring:scoreModel(m,ram,vram,isApple)}))
+    .filter(m=>m.scoring.grade!=='F')
+    .sort((a,b)=>b.scoring.score-a.scoring.score);
+
+  if(!scored.length){
+    placeholder.style.display='block';
+    placeholder.innerHTML='<div style="font-size:32px;margin-bottom:8px">😔</div><div style="font-size:13px;color:var(--red);font-weight:500">Con esta configuración no es posible ejecutar modelos LLM locales de forma razonable.</div><div style="font-size:12px;color:var(--t3);margin-top:6px">Se necesita al menos 4 GB de RAM para el modelo más básico.</div>';
+    box.style.display='none';
+    return;
+  }
+
+  placeholder.style.display='none';
+  box.style.display='block';
+
+  // Marca el recomendado (mejor scoring + grade A o S + multilingüe si idioma es español)
+  const recommended=scored.find(m=>m.scoring.grade==='S'&&m.tags.some(t=>t.includes('Multilingüe')))||scored[0];
+
+  const tok_s=vram>0?'tok_s_gpu':'tok_s_cpu';
+
+  box.innerHTML=`
+  <div style="font-size:12px;color:var(--t3);margin-bottom:10px">
+    ${scored.length} modelos compatibles · Haz click en un modelo para seleccionarlo y ver los comandos de instalación
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px">
+  ${scored.map(m=>{
+    const isRec=m.id===recommended.id;
+    const toks=m[tok_s];
+    const tags=m.tags.map(t=>`<span style="font-size:9px;padding:2px 6px;border-radius:8px;background:#dbeafe;color:var(--accent);font-weight:500">${t}</span>`).join(' ');
+    return `<div class="model-card${isRec?' recommended':''}" id="mcard-${m.id.replace(':','-')}"
+      onclick="selectModelCard('${m.id}')"
+      style="${isRec?'border-color:var(--teal);':''}">
+      ${isRec?'<div style="position:absolute;top:-1px;right:12px;background:var(--teal);color:#fff;font-size:10px;padding:2px 8px;border-radius:0 0 6px 6px;font-weight:500">⭐ Recomendado</div>':''}
+      <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:8px">
+        <div class="model-grade grade-${m.scoring.grade}" style="background:${m.scoring.bg};color:${m.scoring.color}">${m.scoring.grade}</div>
+        <div style="flex:1">
+          <div style="font-size:13px;font-weight:500;color:var(--text)">${m.name}</div>
+          <div style="font-size:11px;color:var(--t3)">${m.org} · ${m.size_gb}GB · ctx ${(m.ctx/1000).toFixed(0)}K</div>
+        </div>
+      </div>
+      <div style="font-size:12px;color:var(--t2);margin-bottom:8px;line-height:1.5">${m.desc}</div>
+      <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:8px">${tags}</div>
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div style="font-size:11px;color:var(--t3)">~${toks} tok/s · ${m.scoring.label}</div>
+        <button class="btn btn-primary" style="font-size:11px;padding:4px 10px" onclick="event.stopPropagation();selectModelCard('${m.id}')">Usar este</button>
+      </div>
+    </div>`;
+  }).join('')}
+  </div>`;
+}
+
+function selectModelCard(modelId){
+  // Deselect all
+  document.querySelectorAll('.model-card').forEach(c=>c.classList.remove('selected'));
+  const safeId=modelId.replace(':','-');
+  const card=document.getElementById('mcard-'+safeId);
+  if(card)card.classList.add('selected');
+
+  selectedModelId=modelId;
+  const m=MODEL_CATALOG.find(x=>x.id===modelId);
+  if(!m)return;
+
+  // Update pull box
+  document.getElementById('pullPlaceholder').style.display='none';
+  document.getElementById('pullContent').style.display='block';
+  document.getElementById('pullCmdText').textContent=`ollama pull ${m.ollama}`;
+  document.getElementById('runCmdText').textContent=`ollama run ${m.ollama} "Hola, responde en una frase"`;
+  document.getElementById('pullSizeNote').innerHTML=`📦 Tamaño de descarga: ~${m.size_gb} GB · Contexto: ${(m.ctx/1000).toFixed(0)}K tokens · Necesitas ${m.ram_min}GB RAM mínimo`;
+
+  // Save to modelManual for use in generation
+  document.getElementById('modelManual').value=m.ollama;
+  onModelChange();
+  log(`🦙 Modelo seleccionado: ${m.name} (${m.ollama})`,'ok');
+}
+
+// ── OS SELECTION ─────────────────────────────────
+function selectOS(os){
+  ['mac','win','linux'].forEach(o=>{
+    document.getElementById('os'+o.charAt(0).toUpperCase()+o.slice(1)).classList.remove('active');
+    document.getElementById('install'+o.charAt(0).toUpperCase()+o.slice(1)).style.display='none';
+  });
+  document.getElementById('installNone').style.display='none';
+  document.getElementById('os'+os.charAt(0).toUpperCase()+os.slice(1)).classList.add('active');
+  document.getElementById('install'+os.charAt(0).toUpperCase()+os.slice(1)).style.display='block';
+  localStorage.setItem('doctoralia_os',os);
+}
+
+// Auto-detect OS
+function detectOS(){
+  const ua=navigator.userAgent;
+  if(/Mac/i.test(ua))return 'mac';
+  if(/Win/i.test(ua))return 'win';
+  if(/Linux/i.test(ua))return 'linux';
+  return null;
+}
+
+// ── COPY COMMAND ─────────────────────────────────
+function copyCmd(block){
+  const code=block.querySelector('code');
+  if(!code)return;
+  navigator.clipboard.writeText(code.textContent).then(()=>{
+    const copy=block.querySelector('.cmd-copy');
+    const origClass=block.className;
+    block.classList.add('copied');
+    if(copy){const o=copy.textContent;copy.textContent='✅ Copiado!';setTimeout(()=>{copy.textContent=o;block.className=origClass;},2000);}
+  });
+}
+
+// ── SAVE AND GO ──────────────────────────────────
+function saveAndGo(){
+  const model=getActiveModel();
+  if(!model){alert('Selecciona un modelo primero.');return;}
+  log(`✅ Modelo guardado: ${model}`,'ok');
+  showMain('wizard');
+}
+
+// ── SHOW INSTALLED MODELS IN SETUP STEP 5 ────────
+function showInstalledModels(models){
+  const box=document.getElementById('installedModelsBox');
+  const list=document.getElementById('installedModelsList');
+  const sel=document.getElementById('model');
+  const saved=localStorage.getItem('doctoralia_ollama_model')||'';
+  if(!box||!list||!sel)return;
+
+  list.innerHTML=models.map(m=>`
+    <div style="display:inline-flex;align-items:center;gap:6px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:20px;padding:4px 12px;font-size:12px;color:var(--teal);cursor:pointer"
+      onclick="document.getElementById('model').value='${m}';onModelChange()"
+      title="Usar ${m}">
+      🦙 ${m}
+    </div>`).join('');
+
+  sel.innerHTML=models.map(m=>`<option value="${m}" ${m===saved?'selected':''}>${m}</option>`).join('');
+  box.style.display='block';
+
+  // Show ready banner if a model is selected
+  const active=saved&&models.includes(saved)?saved:models[0];
+  if(active){
+    sel.value=active;
+    onModelChange();
+    document.getElementById('setupReadyBanner').style.display='block';
+    document.getElementById('readyModelName').textContent=active;
+  }
+}
+
+// ── UPDATE SETUP PANEL META ──────────────────────
+const PANEL_META_ORIG=Object.assign({},typeof PANEL_META!=='undefined'?PANEL_META:{});
+
+// ═══════════════════════════════════════════════════
+//  NEW SETUP WIZARD — OS-aware guided launcher
+// ═══════════════════════════════════════════════════
+(function(){
+  let SW_OS=null;
+  let SW_MODEL='llama3.2';
+  let SW_STEP=1;
+
+  const OS_DATA={
+    mac:{
+      label:'macOS 🍎',
+      openTip:'Spotlight (⌘+Espacio) → "Terminal"',
+      serverCmds:[
+        {label:'Ve a la carpeta del HTML',cmd:'cd ~/Downloads   # ajusta la ruta si es diferente'},
+        {label:'Lanza el servidor web (Terminal 1 — déjala abierta)',cmd:'python3 -m http.server 8080'},
+        {label:'En tu navegador escribe esta URL',cmd:'http://localhost:8080/doctoralia_local.html'},
+      ],
+      serverNote:'Mantén esta terminal abierta mientras uses la app.',
+      ollamaInstall:{label:'Instala Ollama (solo la primera vez)',cmd:'brew install ollama\n# Si no tienes Homebrew: curl -fsSL https://ollama.com/install.sh | sh'},
+      ollamaTip:'Abre una segunda pestaña de Terminal (Cmd+T) o una ventana nueva.',
+    },
+    win:{
+      label:'Windows 🪟',
+      openTip:'Win+R → "powershell" → Enter  (o Win → busca PowerShell)',
+      serverCmds:[
+        {label:'Ve a la carpeta del HTML',cmd:'cd $HOME\\Downloads   # ajusta la ruta si es diferente'},
+        {label:'Lanza el servidor web (Terminal 1 — déjala abierta)',cmd:'python -m http.server 8080'},
+        {label:'En tu navegador escribe esta URL',cmd:'http://localhost:8080/doctoralia_local.html'},
+      ],
+      serverNote:'Mantén esta ventana abierta mientras uses la app.',
+      ollamaInstall:{label:'Instala Ollama — descarga el instalador',cmd:'# Descarga desde https://ollama.com/download/windows\n# Ejecuta el instalador .exe y sigue los pasos'},
+      ollamaTip:'Abre una segunda ventana de PowerShell (Win+R → powershell).',
+    },
+    linux:{
+      label:'Linux 🐧',
+      openTip:'Ctrl+Alt+T  o busca "Terminal" en el menú de aplicaciones',
+      serverCmds:[
+        {label:'Ve a la carpeta del HTML',cmd:'cd ~/Downloads   # ajusta la ruta si es diferente'},
+        {label:'Lanza el servidor web (Terminal 1 — déjala abierta)',cmd:'python3 -m http.server 8080'},
+        {label:'En tu navegador escribe esta URL',cmd:'http://localhost:8080/doctoralia_local.html'},
+      ],
+      serverNote:'Mantén esta terminal abierta. Ctrl+C para parar.',
+      ollamaInstall:{label:'Instala Ollama (solo la primera vez)',cmd:'curl -fsSL https://ollama.com/install.sh | sh'},
+      ollamaTip:'Abre una segunda pestaña (Ctrl+Shift+T) o nueva terminal.',
+    }
+  };
+
+  function swCmd(cmd,label){
+    const id='swcmd-'+Math.random().toString(36).slice(2,7);
+    const safeCmd=cmd.replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    const copyLine=cmd.split('\n').find(l=>l.trim()&&!l.trim().startsWith('#'))||cmd.split('\n')[0];
+    return `<div style="margin-bottom:8px">
+      <div style="font-size:11px;color:#94a3b8;margin-bottom:4px;font-weight:500">${label}</div>
+      <div id="${id}" onclick="(function(el){const code=el.querySelector('code').innerText.split('\\n').find(l=>l.trim()&&!l.trim().startsWith('#'))||el.querySelector('code').innerText;navigator.clipboard.writeText(code.trim()).then(()=>{const sp=el.querySelector('.swcp');const o=sp.textContent;sp.textContent='✅ Copiado';el.style.background='#14532d';setTimeout(()=>{sp.textContent=o;el.style.background='#0f172a';},1800);});})(this)" style="background:#0f172a;border-radius:8px;padding:10px 14px;display:flex;justify-content:space-between;align-items:flex-start;cursor:pointer;gap:10px;transition:background .2s">
+        <code style="font-family:monospace;font-size:12px;color:#7dd3fc;flex:1;white-space:pre;line-height:1.5">${safeCmd}</code>
+        <span class="swcp" style="font-size:11px;color:#64748b;flex-shrink:0;padding-top:2px">📋 Copiar</span>
+      </div>
+    </div>`;
+  }
+
+  function swActivateStep(n){
+    SW_STEP=n;
+    // Update progress bar
+    ['swp1','swp2','swp3','swp4'].forEach((id,i)=>{
+      const el=document.getElementById(id);
+      if(!el)return;
+      const step=i+1;
+      if(step<n){el.style.background='#f0fdf4';el.style.color='#15803d';}
+      else if(step===n){el.style.background='#eff6ff';el.style.color='#2563eb';el.style.fontWeight='600';}
+      else{el.style.background='#f8fafc';el.style.color='#94a3b8';el.style.fontWeight='500';}
+    });
+    // Unlock steps
+    [2,3,4].forEach(s=>{
+      const el=document.getElementById('sw-s'+s);
+      if(!el)return;
+      if(s<=n){el.style.opacity='1';el.style.pointerEvents='auto';}
+      else{el.style.opacity='.4';el.style.pointerEvents='none';}
+    });
+    // Number circles
+    for(let i=1;i<=4;i++){
+      const num=document.getElementById('sw-n'+i);
+      if(!num)continue;
+      if(i<n){num.style.background='#059669';num.textContent='✓';}
+      else if(i===n){num.style.background='#2563eb';num.style.color='#fff';num.textContent=String(i);}
+      else{num.style.background='#e2e8f0';num.style.color='#94a3b8';num.textContent=String(i);}
+    }
+    // Scroll to step
+    const target=document.getElementById('sw-s'+n);
+    if(target)setTimeout(()=>target.scrollIntoView({behavior:'smooth',block:'nearest'}),100);
+  }
+
+  window.swSetOS=function(os){
+    SW_OS=os;
+    localStorage.setItem('doctoralia_os',os);
+    const d=OS_DATA[os];
+    // Update OS buttons
+    ['mac','win','linux'].forEach(o=>{
+      const btn=document.getElementById('sw-os-'+o);
+      if(!btn)return;
+      if(o===os){btn.style.borderColor='#2563eb';btn.style.background='#eff6ff';btn.style.color='#2563eb';}
+      else{btn.style.borderColor='#e2e8f0';btn.style.background='#fff';btn.style.color='#475569';}
+    });
+    document.getElementById('sw-os-detected').textContent='Seleccionado: '+d.label;
+    // Populate step 2
+    let s2html=`<div style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:10px 13px;font-size:12px;color:#92400e;margin-bottom:12px">💡 <strong>Cómo abrir una terminal en ${d.label.split(' ')[0]}:</strong> ${d.openTip}</div>`;
+    d.serverCmds.forEach((c,i)=>{
+      if(i===2){
+        // URL to type in browser — render as URL, not shell command
+        s2html+=`<div style="margin-bottom:8px">
+          <div style="font-size:11px;color:#94a3b8;margin-bottom:4px;font-weight:500">${c.label}</div>
+          <div onclick="navigator.clipboard.writeText('${c.cmd}').then(()=>{const sp=this.querySelector('span');const o=sp.textContent;sp.textContent='✅ Copiado';setTimeout(()=>sp.textContent=o,1800)})" style="background:#eff6ff;border:1.5px solid #bfdbfe;border-radius:8px;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;gap:10px;transition:background .2s">
+            <code style="font-family:monospace;font-size:13px;color:#1d4ed8;flex:1">${c.cmd}</code>
+            <span style="font-size:11px;color:#64748b;flex-shrink:0">📋 Copiar</span>
+          </div>
+        </div>`;
+      } else {
+        s2html+=swCmd(c.cmd,c.label);
+      }
+    });
+    s2html+=`<div style="font-size:11px;color:#94a3b8;margin-top:4px">⚠️ ${d.serverNote}</div>`;
+    document.getElementById('sw-s2-body').innerHTML=s2html;
+    // Populate step 3
+    let s3html=`<div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;padding:10px 13px;font-size:12px;color:#0369a1;margin-bottom:12px">💡 <strong>Segunda terminal:</strong> ${d.ollamaTip}</div>`;
+    s3html+=swCmd(d.ollamaInstall.cmd,d.ollamaInstall.label);
+    document.getElementById('sw-s3-body').innerHTML=s3html;
+    // Refresh Ollama model commands
+    swSelectModel(SW_MODEL);
+    swActivateStep(2);
+  };
+
+  window.swSelectModel=function(model){
+    SW_MODEL=model;
+    // Highlight selected model button
+    document.querySelectorAll('.sw-mdbtn').forEach(btn=>{
+      if(btn.dataset.m===model){btn.style.borderColor='#2563eb';btn.style.background='#eff6ff';btn.style.color='#2563eb';}
+      else{btn.style.borderColor='#e2e8f0';btn.style.background='#fff';btn.style.color='#475569';}
+    });
+    if(!SW_OS)return;
+    const pullCmd=`ollama pull ${model}`;
+    const serveCmd=`ollama serve\n# En otra terminal, prueba el modelo:\nollama run ${model} "Hola, responde en una frase"`;
+    const cmdsHtml=swCmd(pullCmd,`Descarga el modelo ${model} (solo la primera vez · puede tardar 2-10 min)`)+
+                   swCmd(serveCmd,'Arranca Ollama (déjalo corriendo)');
+    document.getElementById('sw-ollama-cmds').innerHTML=cmdsHtml;
+    // Save for main app
+    const mm=document.getElementById('modelManual');
+    if(mm){mm.value=model;try{onModelChange();}catch(e){}}
+  };
+
+  window.swMarkStep2Done=function(){
+    const btn=document.getElementById('sw-s2-btn');
+    if(btn){btn.style.background='#dcfce7';btn.textContent='✅ Paso 2 completado';}
+    swActivateStep(3);
+    swSelectModel(SW_MODEL);
+  };
+
+  window.swMarkStep3Done=function(){
+    const btn=document.getElementById('sw-s3-btn');
+    if(btn){btn.style.background='#dcfce7';btn.textContent='✅ Paso 3 completado';}
+    swActivateStep(4);
+  };
+
+  window.swConnect=async function(){
+    const btn=document.getElementById('sw-connect-btn');
+    const res=document.getElementById('sw-connect-result');
+    btn.textContent='🔄 Conectando…';btn.disabled=true;
+    res.style.display='none';
+    try{
+      const host='http://localhost:11434';
+      const r=await fetch(host+'/api/tags');
+      if(!r.ok)throw new Error('HTTP '+r.status);
+      const data=await r.json();
+      const models=(data.models||[]).map(m=>m.name);
+      if(models.length){
+        res.style.cssText='display:block;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:14px 16px;font-size:13px;color:#15803d';
+        res.innerHTML=`<div style="font-weight:600;margin-bottom:6px">✅ ¡Ollama conectado correctamente!</div>
+          <div style="color:#475569;font-size:12px">Modelos disponibles: <strong>${models.join(', ')}</strong></div>
+          <button onclick="swEnterApp()" style="margin-top:12px;width:100%;background:#059669;color:#fff;border:none;border-radius:8px;padding:12px;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit">🚀 Entrar a Doctoralia →</button>`;
+        // Populate model selector in main app
+        const sel=document.getElementById('model');
+        const saved=localStorage.getItem('doctoralia_ollama_model')||SW_MODEL;
+        if(sel)sel.innerHTML=models.map(m=>`<option value="${m}"${m===saved?' selected':''}>${m}</option>`).join('');
+        const badge=document.getElementById('ollamaStatusBadge');
+        if(badge){badge.textContent='🟢 Conectado · '+models.length+' modelos';badge.style.cssText='margin-left:auto;font-size:11px;background:rgba(5,150,105,.12);color:var(--teal);padding:3px 9px;border-radius:20px;border:1px solid rgba(5,150,105,.3)';}
+        document.getElementById('avI').textContent='🟢';
+        document.getElementById('avL').textContent=saved&&models.includes(saved)?saved:models[0];
+        const dot=document.getElementById('setupDot');const tabDot=document.getElementById('setupTabDot');
+        if(dot)dot.style.background='var(--teal)';if(tabDot)tabDot.style.background='var(--teal)';
+      }else{
+        res.style.cssText='display:block;background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:14px 16px;font-size:13px;color:#92400e';
+        res.innerHTML=`<div style="font-weight:600;margin-bottom:4px">🟡 Ollama responde pero sin modelos instalados</div>
+          <div style="font-size:12px">Ejecuta el paso 3: <code style="background:#fef3c7;padding:1px 5px;border-radius:4px">ollama pull ${SW_MODEL}</code></div>`;
+      }
+    }catch(e){
+      const isCors=e.message.includes('fetch')||e.message.includes('NetworkError');
+      res.style.cssText='display:block;background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:14px 16px;font-size:13px;color:#991b1b';
+      res.innerHTML=isCors
+        ?`<div style="font-weight:600;margin-bottom:6px">💤 Ollama no está corriendo</div>
+           <div style="font-size:12px;line-height:1.6">Ejecuta <code style="background:#fee2e2;padding:1px 5px;border-radius:4px">ollama serve</code> en la terminal del paso 3 y vuelve a intentarlo.</div>`
+        :`<div style="font-weight:600;margin-bottom:4px">❌ Error: ${e.message}</div>
+           <div style="font-size:12px">Revisa que Ollama esté corriendo en http://localhost:11434</div>`;
+    }finally{btn.textContent='🔌 Conectar con Ollama →';btn.disabled=false;}
+    res.style.display='block';
+  };
+
+  window.swEnterApp=function(){
+    localStorage.setItem('doctoralia_setup_done','1');
+    const wiz=document.getElementById('setupWizard');
+    if(wiz)wiz.style.display='none';
+    showMain('wizard');
+  };
+
+  window.swSkip=function(){
+    localStorage.setItem('doctoralia_setup_done','1');
+    const wiz=document.getElementById('setupWizard');
+    if(wiz)wiz.style.display='none';
+    showMain('wizard');
+    testOllamaConnection();
+  };
+
+  // ── INIT ──────────────────────────────────────────
+  function swInit(){
+    // Auto-detect OS
+    const ua=navigator.userAgent;
+    let detectedOS=null;
+    if(/Mac/i.test(ua)&&!/iPhone|iPad/i.test(ua))detectedOS='mac';
+    else if(/Win/i.test(ua))detectedOS='win';
+    else if(/Linux/i.test(ua))detectedOS='linux';
+    const savedOS=localStorage.getItem('doctoralia_os');
+    const os=savedOS||detectedOS;
+    if(os)setTimeout(()=>swSetOS(os),100);
+    // Check if already configured
+    const setupDone=localStorage.getItem('doctoralia_setup_done');
+    const isHTTP=location.protocol==='http:';
+    if(setupDone&&isHTTP){
+      const wiz=document.getElementById('setupWizard');
+      if(wiz)wiz.style.display='none';
+      testOllamaConnection();
+    } else if(isHTTP){
+      // Hide the file:// warning since we're on http already
+      const urlInfo=document.getElementById('sw-url-info');
+      if(urlInfo)urlInfo.style.display='none';
+    }
+  }
+  document.addEventListener('DOMContentLoaded',swInit);
+  // Legacy stubs — prevent errors if old code calls these
+  window.swDetectHardware=function(){swSetOS(SW_OS||'mac');};
+  window.swCopy=function(el){const code=el.querySelector('code');if(code)navigator.clipboard.writeText(code.textContent.trim());};
+  window.swToggleModelList=function(){};
+})();
+
+</script>
+</body>
+</html>
